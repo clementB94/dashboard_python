@@ -42,8 +42,6 @@ for i in range(len(df1)):
 medals = {k: v for k, v in sorted(medals.items(), key=lambda item: item[1]) if v >= 5000}
 medals = {'Country': list(medals.keys()), 'Number of medals': list(medals.values())}
 
-# creating a dict of golden medals by country for choropleth map
-
 
 # Couleurs qu'on va ptet utilsier plus tard
 
