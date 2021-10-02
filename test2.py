@@ -4,7 +4,8 @@ import folium
 import geojson
 import geopandas
 import pandas as pd
-import plotly_express as px
+import plotly.express as px
+# import plotly_express as px
 from dash import Input
 from dash import Output
 from dash import dcc
@@ -14,33 +15,56 @@ from dash import html
 
 df1 = pd.read_csv('athlete_events.csv')
 
-# creating a dict of golden medals by country for bar plot (only the first 20)
 
-gold = dict()
+# creating dataframe of golden medals by country (only the first 20)
+
+gold = pd.DataFrame(columns=['Country', 'Number of golden medals'])
 
 for i in range(len(df1)):
+    noc = df1.loc[i, 'NOC']
     if df1.loc[i, 'Medal'] == 'Gold':
-        if df1.loc[i, 'NOC'] in gold:
-            gold[df1.loc[i, 'NOC']] += 1
+        if noc in gold.values:
+            gold.loc[gold[gold['Country'] == noc].index[0], 'Number of golden medals'] += 1
         else:
-            gold[df1.loc[i, 'NOC']] = 1
+            gold = gold.append({'Country': noc, 'Number of golden medals': 1}, ignore_index=True)
 
-gold = {k: v for k, v in sorted(gold.items(), key=lambda item: item[1]) if v >= 175}
-gold = {'Country': list(gold.keys()), 'Number of gold medals': list(gold.values())}
+gold = gold[gold['Number of golden medals'] >= 179]
+gold = gold.sort_values(by=['Number of golden medals'])
+gold.reset_index(inplace=True, drop=True)
 
-# creating a dict of medals by country for bar plot (only the first 20)
+# creating dataframe of all medals by country (only the first 20)
 
-medals = dict()
+medals = pd.DataFrame(columns=['Country', 'Gold', 'Silver', 'Bronze'])
 
 for i in range(len(df1)):
-    if df1.loc[i, 'Medal'] != 'NaN':
-        if df1.loc[i, 'NOC'] in medals:
-            medals[df1.loc[i, 'NOC']] += 1
+    noc = df1.loc[i, 'NOC']
+    color = df1.loc[i, 'Medal']
+    if not pd.isna(df1.loc[i, 'Medal']):
+        if noc in medals['Country'].values:
+            medals.loc[medals[medals['Country'] == noc].index[0], color] += 1
         else:
-            medals[df1.loc[i, 'NOC']] = 1
+            medals = medals.append({'Country': noc, 'Gold': 0, 'Silver': 0, 'Bronze': 0}, ignore_index=True)
+            medals.loc[medals[medals['Country'] == noc].index[0], color] += 1
 
-medals = {k: v for k, v in sorted(medals.items(), key=lambda item: item[1]) if v >= 5000}
-medals = {'Country': list(medals.keys()), 'Number of medals': list(medals.values())}
+medals['total'] = medals['Gold'] + medals['Silver'] + medals['Bronze']
+medals = medals[medals['total'] >= 638]
+medals = medals.sort_values(by=['total'])
+medals.reset_index(inplace=True, drop=True)
+medals.drop(labels='total', axis=1, inplace=True)
+medals = medals.melt('Country', var_name='medal', value_name='count',)
+
+
+# Convert NOC into countries names
+
+
+country_name_table = {'USA': 'United States', 'URS': 'Soviet Union', 'GER': 'Germany', 'GBR': 'Great Britain',
+                      'ITA': 'Italy', 'FRA': 'France', 'SWE': 'Sweden', 'CAN': 'Canada', 'HUN': 'Hungary',
+                      'GDR': 'East Germany', 'RUS': 'Russia', 'NOR': 'Norway', 'CHN': 'China', 'AUS': 'Australia',
+                      'NED': 'Netherlands', 'JPN': 'Japan', 'KOR': 'South Korea', 'FIN': 'Finland', 'DEN': 'Denmark',
+                      'POL': 'Poland', 'SUI': 'Switzerland', 'ESP': 'Spain', 'AUT': 'Austria', 'ROU': 'Romania'}
+
+gold['Country'].replace(country_name_table, inplace=True)
+medals['Country'].replace(country_name_table, inplace=True)
 
 
 # Couleurs qu'on va ptet utilsier plus tard
@@ -50,26 +74,36 @@ colors = {
     'text': '#E1E2E5',
 }
 
+
+# Building Figures
+
+gold_medal_fig = px.bar(gold, x='Country', y='Number of golden medals')
+
+medal_fig = px.bar(medals, x='Country', y='count', color='medal',
+                   color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
+
+
+# Start of the application
+
 app = dash.Dash(__name__)
 
-gold_medal_fig = px.bar(gold, x='Country', y='Number of gold medals', color='Country')
-
-medal_fig = px.bar(medals, x='Country', y='Number of medals', color='Country')
 
 app.layout = html.Div(children=[
-    html.H1(children='Jeux olympiques mageule', style={
-        'textAlign': 'center', 'font_family': 'sans-serif'
-    }),
-    dcc.RadioItems(
-        id='graph-type',
-        options=[{'label': i, 'value': i} for i in ['only golden medals', 'all medals']],
-        value='only golden medals',
-        labelStyle={'display': 'inline-block'},
-        style={
-            'fontSize': 20, 'textAlign': 'left'
-        },
-    ),
     html.Div([
+        html.H1(children='Jeux olympiques mageule', style={
+            'textAlign': 'center'
+        }),
+    ]),
+    html.Div([
+        dcc.RadioItems(
+                id='graph-type',
+                options=[{'label': i, 'value': i} for i in ['all medals', 'only golden medals']],
+                value='all medals',
+                labelStyle={'display': 'inline-block'},
+                style={
+                    'fontSize': 20, 'textAlign': 'left'
+                },
+            ),
         dcc.Graph(
             id='medal_fig'
         )
