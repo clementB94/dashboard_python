@@ -1,4 +1,5 @@
 import dash
+import numpy as np
 import numpy
 import folium
 import geojson
@@ -10,50 +11,36 @@ from dash import Input
 from dash import Output
 from dash import dcc
 from dash import html
+from pycountry_convert import country_alpha2_to_continent_code, country_name_to_country_alpha2
+from geopy.geocoders import Nominatim
 
 # importing datasets
 
 df1 = pd.read_csv('athlete_events.csv')
-
+df1 = df1.drop_duplicates(subset=['Team', 'NOC', 'Games', 'Year', 'City', 'Sport', 'Event', 'Medal'])
 
 # creating dataframe of golden medals by country (only the first 20)
 
-gold = pd.DataFrame(columns=['Country', 'Number of golden medals'])
-
-for i in range(len(df1)):
-    noc = df1.loc[i, 'NOC']
-    if df1.loc[i, 'Medal'] == 'Gold':
-        if noc in gold.values:
-            gold.loc[gold[gold['Country'] == noc].index[0], 'Number of golden medals'] += 1
-        else:
-            gold = gold.append({'Country': noc, 'Number of golden medals': 1}, ignore_index=True)
-
-gold = gold[gold['Number of golden medals'] >= 179]
-gold = gold.sort_values(by=['Number of golden medals'])
-gold.reset_index(inplace=True, drop=True)
+gold = df1[['NOC', 'Medal']]
+gold = gold[gold['Medal'] == 'Gold']
+gold = gold.NOC.value_counts()
+gold = gold[:20]
+gold = pd.DataFrame({'Country': gold.index, 'Number of golden medals': gold.values})
 
 # creating dataframe of all medals by country (only the first 20)
 
-medals = pd.DataFrame(columns=['Country', 'Gold', 'Silver', 'Bronze'])
+medals = df1[['NOC', 'Medal']].dropna()
+medals = medals.value_counts()
+medals = pd.DataFrame({'Country': medals.index.get_level_values(0),
+                       'medal': medals.index.get_level_values(1), 'count': medals.values})
+medals = medals[medals['Country'].isin(gold['Country'])]
 
-for i in range(len(df1)):
-    noc = df1.loc[i, 'NOC']
-    color = df1.loc[i, 'Medal']
-    if not pd.isna(df1.loc[i, 'Medal']):
-        if noc in medals['Country'].values:
-            medals.loc[medals[medals['Country'] == noc].index[0], color] += 1
-        else:
-            medals = medals.append({'Country': noc, 'Gold': 0, 'Silver': 0, 'Bronze': 0}, ignore_index=True)
-            medals.loc[medals[medals['Country'] == noc].index[0], color] += 1
+# creating data for the map
 
-medals['total'] = medals['Gold'] + medals['Silver'] + medals['Bronze']
-medals = medals[medals['total'] >= 638]
-medals = medals.sort_values(by=['total'])
-medals.reset_index(inplace=True, drop=True)
-medals.drop(labels='total', axis=1, inplace=True)
-medals = medals.melt('Country', var_name='medal', value_name='count',)
-
-
+world_medals = df1[['NOC', 'Medal']].dropna().value_counts()
+world_medals = pd.DataFrame({'Country': world_medals.index.get_level_values(0),
+                             'medal': world_medals.index.get_level_values(1), 'count': world_medals.values})
+print(world_medals)
 # Convert NOC into countries names
 
 
@@ -66,14 +53,12 @@ country_name_table = {'USA': 'United States', 'URS': 'Soviet Union', 'GER': 'Ger
 gold['Country'].replace(country_name_table, inplace=True)
 medals['Country'].replace(country_name_table, inplace=True)
 
-
 # Couleurs qu'on va ptet utilsier plus tard
 
 colors = {
     'background': '#2D2D2D',
     'text': '#E1E2E5',
 }
-
 
 # Building Figures
 
@@ -82,30 +67,40 @@ gold_medal_fig = px.bar(gold, x='Country', y='Number of golden medals')
 medal_fig = px.bar(medals, x='Country', y='count', color='medal',
                    color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
 
+world_fig = px.choropleth(world_medals, locations='Country',
+                          color="count",  # lifeExp is a column of gapminder
+                          hover_name="Country",  # column to add to hover information
+                          color_continuous_scale=px.colors.sequential.Plasma)
+
 
 # Start of the application
 
 app = dash.Dash(__name__)
 
-
 app.layout = html.Div(children=[
     html.Div([
         html.H1(children='Jeux olympiques mageule', style={
-            'textAlign': 'center'
+            'textAlign': 'center', 'padding': '15px'
         }),
     ]),
     html.Div([
         dcc.RadioItems(
-                id='graph-type',
-                options=[{'label': i, 'value': i} for i in ['all medals', 'only golden medals']],
-                value='all medals',
-                labelStyle={'display': 'inline-block'},
-                style={
-                    'fontSize': 20, 'textAlign': 'left'
-                },
-            ),
+            id='graph-type',
+            options=[{'label': i, 'value': i} for i in ['all medals', 'only golden medals']],
+            value='all medals',
+            labelStyle={'display': 'inline-block'},
+            style={
+                'fontSize': 20, 'textAlign': 'left'
+            },
+        ),
         dcc.Graph(
             id='medal_fig'
+        )
+    ]),
+    html.Div([
+        dcc.Graph(
+            figure=world_fig,
+            id='world_fig'
         )
     ])
 ])
