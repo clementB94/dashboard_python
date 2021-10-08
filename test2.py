@@ -35,6 +35,25 @@ medals = pd.DataFrame({'Country': medals.index.get_level_values(0),
                        'medal': medals.index.get_level_values(1), 'count': medals.values})
 medals = medals[medals['Country'].isin(gold['Country'])]
 
+# creating dataframe of all medals by country for time series map
+
+years = sorted(df1['Year'].unique())
+world_medals_time = {year: df1.query("Year <= @year") for year in years}
+
+for year in world_medals_time.keys():
+    world_medals_time[year] = world_medals_time[year][['NOC', 'Medal']].value_counts()
+    world_medals_time[year] = pd.DataFrame({'Country': world_medals_time[year].index.get_level_values(0),
+                                            'medal': world_medals_time[year].index.get_level_values(1),
+                                            'count': world_medals_time[year].values})
+    world_medals_time[year] = world_medals_time[year].pivot(index='Country', columns='medal', values='count')
+    world_medals_time[year].fillna(0, inplace=True)
+    world_medals_time[year].reset_index(inplace=True)
+    world_medals_time[year]['Total number of medals'] = world_medals_time[year]['Gold'] + world_medals_time[year][
+        'Silver'] + world_medals_time[year]['Bronze']
+
+# year_slider = {year: str(year) for year in years[0:10]}
+year_slider = {str(year): '{}'.format(year) for year in years}
+print(year_slider)
 # creating dataframe of all medals by country but in wide format
 
 world_medals = df1[['NOC', 'Medal']].dropna().value_counts()
@@ -102,7 +121,8 @@ medals['Country'].replace(country_name_table, inplace=True)
 # Convert NOC into ISO
 
 noc_to_iso = {'GER': 'DEU', 'SUI': 'CHE', 'POR': 'PRT', 'NED': 'NLD', 'DEN': 'DNK', 'CRO': 'HRV', 'INA': 'IDN',
-              'MAS': 'MYS', 'UAE': 'ARE', 'KSA': 'SAU', 'IRI': 'IRN', 'CHI': 'CHL', 'BUL': 'BLR'}
+              'MAS': 'MYS', 'UAE': 'ARE', 'KSA': 'SAU', 'IRI': 'IRN', 'CHI': 'CHL', 'SLO': 'SVN', 'GRE': 'GRC',
+              'BUL': 'BGR', 'LAT': 'LVA', 'OMA': 'OMN', 'MGL': 'MNG', 'NEP': 'NPL'}
 
 world_medals['Country'].replace(noc_to_iso, inplace=True)
 running_medals['Country'].replace(noc_to_iso, inplace=True)
@@ -128,7 +148,7 @@ medal_fig = px.bar(medals, x='Country', y='count', color='medal',
 world_fig = px.choropleth(world_medals, locations='Country',
                           color='Total number of medals',
                           hover_data=['Gold', 'Silver', 'Bronze'],
-                          color_continuous_scale=px.colors.sequential.amp)
+                          color_continuous_scale=px.colors.sequential.Bluyl)
 
 running_fig = px.choropleth(running_medals, locations='Country',
                             color='Total number of medals',
@@ -180,8 +200,15 @@ app.layout = html.Div(children=[
         )
     ]),
     html.Div([
+        dcc.Slider(
+            id="year-slider",
+            marks=year_slider,
+            step=None,
+            min=1896,
+            max=2016,
+            value=2016,
+        ),
         dcc.Graph(
-            figure=world_fig,
             id='world_fig'
         )
     ]),
@@ -227,6 +254,18 @@ def build_graph(map_type):
         return cycle_fig
     if map_type == 'Skiing':
         return ski_fig
+
+
+@app.callback(
+    Output(component_id='world_fig', component_property='figure'),  # (1)
+    [Input(component_id='year-slider', component_property='value')]  # (2)
+)
+def update_figure(input_value):
+    return px.choropleth(world_medals_time[input_value], locations='Country',
+                         color='Total number of medals',
+                         hover_data=['Gold', 'Silver', 'Bronze'],
+                         color_continuous_scale=px.colors.sequential.Bluyl,
+                         range_color=[0, 2700])
 
 
 if __name__ == '__main__':
