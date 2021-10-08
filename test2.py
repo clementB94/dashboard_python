@@ -17,7 +17,8 @@ from geopy.geocoders import Nominatim
 # importing datasets
 
 df1 = pd.read_csv('athlete_events.csv')
-df1 = df1.drop_duplicates(subset=['Team', 'NOC', 'Games', 'Year', 'City', 'Sport', 'Event', 'Medal'])
+
+df1 = df1.drop_duplicates(subset=['Team', 'Games', 'Year', 'City', 'Sport', 'Event', 'Medal'])
 
 # creating dataframe of golden medals by country (only the first 20)
 
@@ -26,6 +27,20 @@ gold = gold[gold['Medal'] == 'Gold']
 gold = gold.NOC.value_counts()
 gold = gold[:20]
 gold = pd.DataFrame({'Country': gold.index, 'Number of golden medals': gold.values})
+
+# conversion tables
+
+noc_to_iso = {'GER': 'DEU', 'SUI': 'CHE', 'POR': 'PRT', 'NED': 'NLD', 'DEN': 'DNK', 'CRO': 'HRV', 'INA': 'IDN',
+              'MAS': 'MYS', 'UAE': 'ARE', 'KSA': 'SAU', 'IRI': 'IRN', 'CHI': 'CHL', 'SLO': 'SVN', 'GRE': 'GRC',
+              'BUL': 'BGR', 'LAT': 'LVA', 'OMA': 'OMN', 'MGL': 'MNG', 'NEP': 'NPL', 'RSA': 'ZAF', 'GUI': 'GIN',
+              'SLE': 'SLE', 'BOT': 'BWA', 'GBS': 'GNB', 'GAM': 'GMB', 'MLI': 'RMM', 'ALG': 'DZA', 'LBA': 'LBY',
+              'ZIM': 'ZWE', 'ANG': 'AGO', 'CGO': 'COG', 'PAR': 'PRY', 'MAD': 'MDG'}
+
+country_name_table = {'USA': 'United States', 'URS': 'Soviet Union', 'GER': 'Germany', 'GBR': 'Great Britain',
+                      'ITA': 'Italy', 'FRA': 'France', 'SWE': 'Sweden', 'CAN': 'Canada', 'HUN': 'Hungary',
+                      'GDR': 'East Germany', 'RUS': 'Russia', 'NOR': 'Norway', 'CHN': 'China', 'AUS': 'Australia',
+                      'NED': 'Netherlands', 'JPN': 'Japan', 'KOR': 'South Korea', 'FIN': 'Finland', 'DEN': 'Denmark',
+                      'POL': 'Poland', 'SUI': 'Switzerland', 'ESP': 'Spain', 'AUT': 'Austria', 'ROU': 'Romania'}
 
 # creating dataframe of all medals by country (only the first 20)
 
@@ -50,19 +65,11 @@ for year in world_medals_time.keys():
     world_medals_time[year].reset_index(inplace=True)
     world_medals_time[year]['Total number of medals'] = world_medals_time[year]['Gold'] + world_medals_time[year][
         'Silver'] + world_medals_time[year]['Bronze']
+    world_medals_time[year]['Country'].replace(noc_to_iso, inplace=True)
 
-# year_slider = {year: str(year) for year in years[0:10]}
+# year_slider values
+
 year_slider = {str(year): '{}'.format(year) for year in years}
-print(year_slider)
-# creating dataframe of all medals by country but in wide format
-
-world_medals = df1[['NOC', 'Medal']].dropna().value_counts()
-world_medals = pd.DataFrame({'Country': world_medals.index.get_level_values(0),
-                             'medal': world_medals.index.get_level_values(1), 'count': world_medals.values})
-world_medals = world_medals.pivot(index='Country', columns='medal', values='count')
-world_medals.fillna(0, inplace=True)
-world_medals.reset_index(inplace=True)
-world_medals['Total number of medals'] = world_medals['Gold'] + world_medals['Silver'] + world_medals['Bronze']
 
 # creating dataframe of medals by country but only on specific events type
 
@@ -108,23 +115,11 @@ ski_medals['Total number of medals'] = ski_medals['Gold'] + ski_medals['Silver']
 
 # Convert NOC into countries names
 
-
-country_name_table = {'USA': 'United States', 'URS': 'Soviet Union', 'GER': 'Germany', 'GBR': 'Great Britain',
-                      'ITA': 'Italy', 'FRA': 'France', 'SWE': 'Sweden', 'CAN': 'Canada', 'HUN': 'Hungary',
-                      'GDR': 'East Germany', 'RUS': 'Russia', 'NOR': 'Norway', 'CHN': 'China', 'AUS': 'Australia',
-                      'NED': 'Netherlands', 'JPN': 'Japan', 'KOR': 'South Korea', 'FIN': 'Finland', 'DEN': 'Denmark',
-                      'POL': 'Poland', 'SUI': 'Switzerland', 'ESP': 'Spain', 'AUT': 'Austria', 'ROU': 'Romania'}
-
 gold['Country'].replace(country_name_table, inplace=True)
 medals['Country'].replace(country_name_table, inplace=True)
 
 # Convert NOC into ISO
 
-noc_to_iso = {'GER': 'DEU', 'SUI': 'CHE', 'POR': 'PRT', 'NED': 'NLD', 'DEN': 'DNK', 'CRO': 'HRV', 'INA': 'IDN',
-              'MAS': 'MYS', 'UAE': 'ARE', 'KSA': 'SAU', 'IRI': 'IRN', 'CHI': 'CHL', 'SLO': 'SVN', 'GRE': 'GRC',
-              'BUL': 'BGR', 'LAT': 'LVA', 'OMA': 'OMN', 'MGL': 'MNG', 'NEP': 'NPL'}
-
-world_medals['Country'].replace(noc_to_iso, inplace=True)
 running_medals['Country'].replace(noc_to_iso, inplace=True)
 gym_medals['Country'].replace(noc_to_iso, inplace=True)
 swim_medals['Country'].replace(noc_to_iso, inplace=True)
@@ -145,35 +140,30 @@ gold_medal_fig = px.bar(gold, x='Country', y='Number of golden medals')
 medal_fig = px.bar(medals, x='Country', y='count', color='medal',
                    color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
 
-world_fig = px.choropleth(world_medals, locations='Country',
-                          color='Total number of medals',
-                          hover_data=['Gold', 'Silver', 'Bronze'],
-                          color_continuous_scale=px.colors.sequential.Bluyl)
-
 running_fig = px.choropleth(running_medals, locations='Country',
                             color='Total number of medals',
                             hover_data=['Gold', 'Silver', 'Bronze'],
-                            color_continuous_scale=px.colors.sequential.Redor)
+                            color_continuous_scale=px.colors.sequential.Redor, width=1100, height=550)
 
 gym_fig = px.choropleth(gym_medals, locations='Country',
                         color='Total number of medals',
                         hover_data=['Gold', 'Silver', 'Bronze'],
-                        color_continuous_scale=px.colors.sequential.Redor)
+                        color_continuous_scale=px.colors.sequential.Redor, width=1100, height=550)
 
 swim_fig = px.choropleth(swim_medals, locations='Country',
                          color='Total number of medals',
                          hover_data=['Gold', 'Silver', 'Bronze'],
-                         color_continuous_scale=px.colors.sequential.Redor)
+                         color_continuous_scale=px.colors.sequential.Redor, width=1100, height=550)
 
 cycle_fig = px.choropleth(cycle_medals, locations='Country',
                           color='Total number of medals',
                           hover_data=['Gold', 'Silver', 'Bronze'],
-                          color_continuous_scale=px.colors.sequential.Redor)
+                          color_continuous_scale=px.colors.sequential.Redor, width=1100, height=550)
 
 ski_fig = px.choropleth(ski_medals, locations='Country',
                         color='Total number of medals',
                         hover_data=['Gold', 'Silver', 'Bronze'],
-                        color_continuous_scale=px.colors.sequential.Redor)
+                        color_continuous_scale=px.colors.sequential.Redor, width=1100, height=550)
 
 # Start of the application
 
@@ -181,9 +171,7 @@ app = dash.Dash(__name__)
 
 app.layout = html.Div(children=[
     html.Div([
-        html.H1(children='Jeux olympiques mageule', style={
-            'textAlign': 'center', 'padding': '15px'
-        }),
+        html.H1(children='Olympic Games Dashboard', style={'textAlign': 'center', 'margin': '15px'}),
     ]),
     html.Div([
         dcc.RadioItems(
@@ -191,41 +179,41 @@ app.layout = html.Div(children=[
             options=[{'label': i, 'value': i} for i in ['all medals', 'only golden medals']],
             value='all medals',
             labelStyle={'display': 'inline-block'},
-            style={
-                'fontSize': 20, 'textAlign': 'left'
-            },
+            style={'fontSize': 20, 'textAlign': 'center'},
         ),
         dcc.Graph(
             id='medal_fig'
         )
     ]),
     html.Div([
-        dcc.Slider(
-            id="year-slider",
-            marks=year_slider,
-            step=None,
-            min=1896,
-            max=2016,
-            value=2016,
-        ),
-        dcc.Graph(
-            id='world_fig'
-        )
+        html.H1(children='map of the evolution of medals won', style={'textAlign': 'center', 'margin-top': '60px'}),
+        html.Div([
+            dcc.Graph(
+                id='world_fig'
+            ),
+        ], style={'padding-left': '15%'}),
+        html.Div([
+            html.Button('play', id='play'),
+            html.Button('pause', id='pause')
+        ], style={'textAlign': 'center'}),
+        dcc.Slider(id="year_slider", marks=year_slider, step=None, min=1896, max=2016, value=2016),
+        dcc.Interval(id='interval', interval=500, n_intervals=0, disabled=True),
     ]),
+
     html.Div([
-        html.H1(children='Map of medals won by sport'),
+        html.H1(children='Map of medals won by sport', style={'textAlign': 'center', 'margin-top': '60px'}),
         dcc.RadioItems(
             id='map_type',
             options=[{'label': i, 'value': i} for i in ['Athletics', 'Gymnastics', 'Swimming', 'Cycling', 'Skiing']],
             value='Athletics',
             labelStyle={'display': 'inline-block'},
-            style={
-                'fontSize': 20
-            },
+            style={'fontSize': 20, 'textAlign': 'center'},
         ),
-        dcc.Graph(
-            id='sport_fig'
-        )
+        html.Div([
+            dcc.Graph(
+                id='sport_fig'
+            )
+        ], style={'padding-left': '15%'})
     ])
 ])
 
@@ -258,14 +246,35 @@ def build_graph(map_type):
 
 @app.callback(
     Output(component_id='world_fig', component_property='figure'),  # (1)
-    [Input(component_id='year-slider', component_property='value')]  # (2)
+    [Input(component_id='year_slider', component_property='value')]  # (2)
 )
 def update_figure(input_value):
     return px.choropleth(world_medals_time[input_value], locations='Country',
                          color='Total number of medals',
                          hover_data=['Gold', 'Silver', 'Bronze'],
                          color_continuous_scale=px.colors.sequential.Bluyl,
-                         range_color=[0, 2700])
+                         range_color=[0, 2700], width=1100, height=550)
+
+
+@app.callback(Output('year_slider', 'value'),
+              [Input('interval', 'n_intervals')]
+              )
+def on_tick(n_intervals):
+    if n_intervals is None:
+        return 0
+    return years[(n_intervals + 1) % len(years)]
+
+
+@app.callback(Output('interval', 'disabled'),
+              Input('play', 'n_clicks'),
+              Input('pause', 'n_clicks'),
+              )
+def play(play, pause):
+    changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
+    if 'pause' in changed_id:
+        return True
+    if 'play' in changed_id:
+        return False
 
 
 if __name__ == '__main__':
