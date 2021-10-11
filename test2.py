@@ -14,6 +14,7 @@ from dash import html
 from datetime import datetime
 from pycountry_convert import country_alpha2_to_continent_code, country_name_to_country_alpha2
 from geopy.geocoders import Nominatim
+pd.options.mode.chained_assignment = None
 
 # importing datasets
 
@@ -121,14 +122,10 @@ ski_medals['Total number of medals'] = ski_medals['Gold'] + ski_medals['Silver']
 
 # creating dataframe for performances histogram
 
-# df2 = df2[df2['rank'] == 1]
-# df2['results'] = pd.to_timedelta(df2['results'])
-
 running_sports = df2['sport'].unique()
 running_bar = {sport: df2.query("sport == @sport and rank == 1") for sport in running_sports}
 for sport in running_sports:
     running_bar[sport]['seconds'] = pd.to_timedelta(running_bar[sport]['results']).dt.total_seconds()
-    print(running_bar[sport])
 
 # Convert NOC into countries names
 
