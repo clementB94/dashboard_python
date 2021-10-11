@@ -6,19 +6,23 @@ import geojson
 import geopandas
 import pandas as pd
 import plotly.express as px
-# import plotly_express as px
+import plotly.graph_objects as go
 from dash import Input
 from dash import Output
 from dash import dcc
 from dash import html
+from datetime import datetime
 from pycountry_convert import country_alpha2_to_continent_code, country_name_to_country_alpha2
 from geopy.geocoders import Nominatim
 
 # importing datasets
 
 df1 = pd.read_csv('athlete_events.csv')
-
 df1 = df1.drop_duplicates(subset=['Team', 'Games', 'Year', 'City', 'Sport', 'Event', 'Medal'])
+
+df2 = pd.read_csv('running_times.csv')
+
+# df2['results'] = pd.to_datetime(df2['results'], format='%H:%M:%S.%f')
 
 # conversion tables
 
@@ -115,6 +119,17 @@ ski_medals.fillna(0, inplace=True)
 ski_medals.reset_index(inplace=True)
 ski_medals['Total number of medals'] = ski_medals['Gold'] + ski_medals['Silver'] + ski_medals['Bronze']
 
+# creating dataframe for performances histogram
+
+# df2 = df2[df2['rank'] == 1]
+# df2['results'] = pd.to_timedelta(df2['results'])
+
+running_sports = df2['sport'].unique()
+running_bar = {sport: df2.query("sport == @sport and rank == 1") for sport in running_sports}
+for sport in running_sports:
+    running_bar[sport]['seconds'] = pd.to_timedelta(running_bar[sport]['results']).dt.total_seconds()
+    print(running_bar[sport])
+
 # Convert NOC into countries names
 
 gold['Country'].replace(country_name_table, inplace=True)
@@ -141,6 +156,8 @@ gold_medal_fig = px.bar(gold, x='Country', y='Number of golden medals')
 
 medal_fig = px.bar(medals, x='Country', y='count', color='medal',
                    color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
+
+# map figures
 
 running_fig = px.choropleth(running_medals, locations='Country',
                             color='Total number of medals',
@@ -189,14 +206,15 @@ app.layout = html.Div(children=[
     ]),
     html.Div([
         html.H1(children='map of the evolution of medals won', style={'textAlign': 'center', 'margin-top': '60px'}),
+        html.Div(id='slider-output-container', style={'textAlign': 'center'}),
         html.Div([
             dcc.Graph(
                 id='world_fig'
             ),
         ], style={'padding-left': '15%'}),
         html.Div([
-            html.Button('play', id='play'),
-            html.Button('pause', id='pause')
+            html.Button('play', id='play', style={'fontSize': 18}),
+            html.Button('pause', id='pause', style={'fontSize': 18})
         ], style={'textAlign': 'center'}),
         dcc.Slider(id="year_slider", marks=year_slider, step=None, min=1896, max=2016, value=2016),
         dcc.Interval(id='interval', interval=500, n_intervals=0, disabled=True),
@@ -216,6 +234,23 @@ app.layout = html.Div(children=[
                 id='sport_fig'
             )
         ], style={'padding-left': '15%'})
+    ]),
+    html.Div([
+        html.H1(children='Best performances by edition', style={'textAlign': 'center', 'margin-top': '60px'}),
+        html.Div([
+            dcc.Dropdown(options=[{'label': '100m', 'value': '100m'}, {'label': '200m', 'value': '200m'},
+                                  {'label': '400m', 'value': '400m'}, {'label': '800m', 'value': '800m'},
+                                  {'label': '110m hurdles', 'value': '110m hurdles'},
+                                  {'label': '100m hurdles', 'value': '100m hurdles'},
+                                  {'label': '400m hurdles', 'value': '400m hurdles'},
+                                  {'label': '1500m', 'value': '1500m'}, {'label': '5000m', 'value': '5000m'},
+                                  {'label': '10000m', 'value': '10000m'}, {'label': 'marathon', 'value': 'marathon'}
+                                  ],
+                         value='100m', id='running_type', style={'textAlign': 'center'}),
+        ], style={'width': '20%'}),
+        dcc.Graph(
+            id='performances_hist'
+        )
     ])
 ])
 
@@ -247,8 +282,8 @@ def build_graph(map_type):
 
 
 @app.callback(
-    Output(component_id='world_fig', component_property='figure'),  # (1)
-    [Input(component_id='year_slider', component_property='value')]  # (2)
+    Output('world_fig', 'figure'),  # (1)
+    [Input('year_slider', 'value')]  # (2)
 )
 def update_figure(input_value):
     return px.choropleth(world_medals_time[input_value], locations='Country',
@@ -269,14 +304,30 @@ def on_tick(n_intervals):
 
 @app.callback(Output('interval', 'disabled'),
               Input('play', 'n_clicks'),
-              Input('pause', 'n_clicks'),
-              )
+              Input('pause', 'n_clicks'))
 def play(play, pause):
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
     if 'pause' in changed_id:
         return True
     if 'play' in changed_id:
         return False
+
+
+@app.callback(
+    Output('performances_hist', 'figure'),
+    Input('running_type', 'value'),
+)
+def update_figure(value):
+    return px.bar(running_bar[value], x='year', y='seconds', barmode='group', color='gender',
+                  hover_data=['name', 'country', 'location', 'results'],
+                  range_y=[min(running_bar[value]['seconds']*0.95), max(running_bar[value]['seconds']*1.05)])
+
+
+@app.callback(
+    dash.dependencies.Output('slider-output-container', 'children'),
+    [dash.dependencies.Input('year_slider', 'value')])
+def update_output(value):
+    return 'Map of the year {}'.format(value)
 
 
 if __name__ == '__main__':
