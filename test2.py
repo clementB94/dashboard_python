@@ -1,19 +1,11 @@
 import dash
-import numpy as np
-import numpy
-import folium
-import geojson
-import geopandas
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 from dash import Input
 from dash import Output
 from dash import dcc
 from dash import html
-from datetime import datetime
-from pycountry_convert import country_alpha2_to_continent_code, country_name_to_country_alpha2
-from geopy.geocoders import Nominatim
+
 pd.options.mode.chained_assignment = None
 
 # importing datasets
@@ -147,6 +139,24 @@ colors = {
     'text': '#E1E2E5',
 }
 
+# Weight/Height by sport
+
+df2 = df1[df1["Season"] == "Summer"][["Sex", "Sport", "Weight", "Height", "Age"]]
+grouped_df = df2.groupby(["Sex", "Sport"])
+mean_df = grouped_df.mean().round(2).reset_index()
+fig_weight_height = px.scatter(mean_df, x="Weight", y="Height", color="Sport", text="Sport", facet_col="Sex")
+fig_weight_height.layout.yaxis2.update(matches=None)
+fig_weight_height.layout.xaxis2.update(matches=None)
+fig_weight_height.update_traces(textposition='middle right', textfont_size=8)
+
+# Weight Height Age by sport in 3d
+
+grouped_df = df2.groupby(["Sex", "Sport"])
+mean_df = grouped_df.mean().round(2).reset_index()
+fig_weight_height_age = px.scatter_3d(mean_df, x="Weight", z="Height", y="Age", color="Sex", text="Sport")
+fig_weight_height_age.update_traces(textposition='middle right', textfont_size=8)
+fig_weight_height_age.update_layout(height=700)
+
 # Building Figures
 
 gold_medal_fig = px.bar(gold, x='Country', y='Number of golden medals')
@@ -248,7 +258,18 @@ app.layout = html.Div(children=[
         dcc.Graph(
             id='performances_hist'
         )
-    ])
+    ]),
+    html.Div([
+        html.Div([
+            html.H1(children='Weight/Height by sport (summer editions)',
+                    style={'margin': '15px', 'margin-top': '60px'}),
+            html.P(children='click on legend to display particular sports', style={'margin': '15px'}),
+        ]),
+        html.Div([
+            dcc.Graph(figure=fig_weight_height),
+            dcc.Graph(figure=fig_weight_height_age)
+        ])
+    ], style={'textAlign': 'center'})
 ])
 
 
