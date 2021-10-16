@@ -1,10 +1,13 @@
 import dash
 import pandas as pd
 import plotly.express as px
+import numpy as np
 from dash import Input
 from dash import Output
 from dash import dcc
 from dash import html
+import plotly.graph_objects as go
+from scipy import stats
 
 pd.options.mode.chained_assignment = None
 
@@ -14,8 +17,6 @@ df1 = pd.read_csv('athlete_events.csv')
 df1 = df1.drop_duplicates(subset=['Team', 'Games', 'Year', 'City', 'Sport', 'Event', 'Medal'])
 
 df2 = pd.read_csv('running_times.csv')
-
-# df2['results'] = pd.to_datetime(df2['results'], format='%H:%M:%S.%f')
 
 # conversion tables
 
@@ -33,6 +34,21 @@ country_name_table = {'USA': 'United States', 'URS': 'Soviet Union', 'GER': 'Ger
                       'NED': 'Netherlands', 'JPN': 'Japan', 'KOR': 'South Korea', 'FIN': 'Finland', 'DEN': 'Denmark',
                       'POL': 'Poland', 'SUI': 'Switzerland', 'ESP': 'Spain', 'AUT': 'Austria', 'ROU': 'Romania'}
 
+# NOC codes by region
+
+africa = ['ALG', 'LBA', 'EGY', 'MAR', 'SUD', 'TUN', 'BEN', 'BUR', 'GAM', 'GHA', 'GUI', 'GBS', 'CIV', 'LBR', 'MTN',
+          'MLI', 'MTN', 'NIG', 'NGR', 'SEN', 'CMR', 'GAB', 'KEN', 'RWA', 'ETH', 'ANG', 'BOT', 'RSA', 'ZAM', 'ZIM', ]
+
+europe = ['AUT', 'BEL', 'BIH', 'BUL', 'CRO', 'CZE', 'DEN', 'EST', 'FIN', 'FRA', 'GER', 'GBR', 'GRE', 'HUN', 'ISL',
+          'IRL', 'ITA', 'LAT', 'LTU', 'NED', 'NOR', 'POL', 'POR', 'ROU', 'RUS', 'AUT', 'SRB', 'SVK', 'SLO', 'ESP',
+          'SWE', 'SUI', 'IRL', 'TUR', 'UKR']
+
+america = ['USA', 'ARG', 'BRA', 'CAN', 'CHI', 'COL', 'CRC', 'CUB', 'DOM', 'HAI', 'JAM', 'MEX', 'NCA', 'PAN', 'PAR',
+           'PUR', 'URU', 'VEN']
+
+asia = ['IRI', 'IRQ', 'QAT', 'KSA', 'UAE', 'KAZ', 'IND', 'NEP', 'PAK', 'SRI', 'TPE', 'CHN', 'HKG', 'JPN', 'PRK', 'KOR',
+        'MGL', 'CAM', 'INA', 'MAS', 'MYA', 'PHI', 'SGP', 'THA', 'VIE', 'ISR']
+
 # creating dataframe of golden medals by country (only the first 20)
 
 gold = df1[['NOC', 'Medal']]
@@ -45,8 +61,13 @@ gold = pd.DataFrame({'Country': gold.index, 'Number of golden medals': gold.valu
 
 medals = df1[['NOC', 'Medal']].dropna()
 medals = medals.value_counts()
+
 medals = pd.DataFrame({'Country': medals.index.get_level_values(0),
                        'medal': medals.index.get_level_values(1), 'count': medals.values})
+africa_medals = medals[medals['Country'].isin(africa)]
+europe_medals = medals[medals['Country'].isin(europe)]
+america_medals = medals[medals['Country'].isin(america)]
+asia_medals = medals[medals['Country'].isin(asia)]
 medals = medals[medals['Country'].isin(gold['Country'])]
 
 # creating dataframe of all medals by country for time series map
@@ -114,14 +135,14 @@ ski_medals['Total number of medals'] = ski_medals['Gold'] + ski_medals['Silver']
 
 # creating dataframe for performances histogram
 
-running_sports = df2['sport'].unique()
-running_bar = {sport: df2.query("sport == @sport and rank == 1") for sport in running_sports}
-for sport in running_sports:
-    running_bar[sport]['seconds'] = pd.to_timedelta(running_bar[sport]['results']).dt.total_seconds()
+df2 = pd.read_csv('running_times.csv')
+df2['seconds'] = pd.to_timedelta(df2['results']).dt.total_seconds()
+fig_time_year = px.box(df2, x="year", y="seconds")
+fig_time_year.update_traces(quartilemethod="exclusive")
+fig = px.histogram(df2, x="seconds")
 
 # Convert NOC into countries names
 
-gold['Country'].replace(country_name_table, inplace=True)
 medals['Country'].replace(country_name_table, inplace=True)
 
 # Convert NOC into ISO
@@ -141,25 +162,15 @@ colors = {
 
 # Weight/Height by sport
 
-df2 = df1[df1["Season"] == "Summer"][["Sex", "Sport", "Weight", "Height", "Age"]]
-grouped_df = df2.groupby(["Sex", "Sport"])
+grouped_df = df1[df1["Season"] == "Summer"][["Sex", "Sport", "Weight", "Height", "Age"]]
+grouped_df = grouped_df.groupby(["Sex", "Sport"])
 mean_df = grouped_df.mean().round(2).reset_index()
 fig_weight_height = px.scatter(mean_df, x="Weight", y="Height", color="Sport", text="Sport", facet_col="Sex")
 fig_weight_height.layout.yaxis2.update(matches=None)
 fig_weight_height.layout.xaxis2.update(matches=None)
 fig_weight_height.update_traces(textposition='middle right', textfont_size=8)
 
-# Weight Height Age by sport in 3d
-
-grouped_df = df2.groupby(["Sex", "Sport"])
-mean_df = grouped_df.mean().round(2).reset_index()
-fig_weight_height_age = px.scatter_3d(mean_df, x="Weight", z="Height", y="Age", color="Sex", text="Sport")
-fig_weight_height_age.update_traces(textposition='middle right', textfont_size=8)
-fig_weight_height_age.update_layout(height=700)
-
 # Building Figures
-
-gold_medal_fig = px.bar(gold, x='Country', y='Number of golden medals')
 
 medal_fig = px.bar(medals, x='Country', y='count', color='medal',
                    color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
@@ -195,40 +206,41 @@ ski_fig = px.choropleth(ski_medals, locations='Country',
 
 app = dash.Dash(__name__)
 
-app.layout = html.Div(children=[
+app.layout = html.Div(className='background', children=[
     html.Div([
-        html.H1(children='Olympic Games Dashboard', style={'textAlign': 'center', 'margin': '15px'}),
+        html.H1(children='Olympic Games Dashboard', style={'textAlign': 'center'}),
     ]),
     html.Div([
-        dcc.RadioItems(
-            id='graph_type',
-            options=[{'label': i, 'value': i} for i in ['all medals', 'only golden medals']],
-            value='all medals',
-            labelStyle={'display': 'inline-block'},
-            style={'fontSize': 20, 'textAlign': 'center'},
-        ),
+        html.H1(children='Total amount of medals', style={'textAlign': 'center'}),
+        dcc.Tabs(id="graph_type", value='world', children=[
+            dcc.Tab(label='Worldwide', value='world'),
+            dcc.Tab(label='Europe', value='europe_medals'),
+            dcc.Tab(label='America', value='america_medals'),
+            dcc.Tab(label='Asia', value='asia_medals'),
+            dcc.Tab(label='Africa', value='africa_medals')
+        ]),
         dcc.Graph(
             id='medal_fig'
         )
-    ]),
+    ], className='container'),
     html.Div([
-        html.H1(children='map of the evolution of medals won', style={'textAlign': 'center', 'margin-top': '60px'}),
+        html.H1(children='map of the evolution of medals won', style={'textAlign': 'center'}),
         html.Div(id='slider-output-container', style={'textAlign': 'center'}),
         html.Div([
             dcc.Graph(
-                id='world_fig'
+                id='world_fig', style={'margin-left': '8%'}
             ),
-        ], style={'padding-left': '15%'}),
+        ]),
         html.Div([
-            html.Button('play', id='play', style={'fontSize': 18}),
-            html.Button('pause', id='pause', style={'fontSize': 18})
+            html.Button('play', id='play'),
+            html.Button('pause', id='pause')
         ], style={'textAlign': 'center'}),
-        dcc.Slider(id="year_slider", marks=year_slider, step=None, min=1896, max=2016, value=2016),
+        dcc.Slider(id="year_slider", marks=year_slider, step=None, min=1896, max=2016, value=2016, className='slider'),
         dcc.Interval(id='interval', interval=500, n_intervals=0, disabled=True),
-    ]),
+    ], className='container'),
 
     html.Div([
-        html.H1(children='Map of medals won by sport', style={'textAlign': 'center', 'margin-top': '60px'}),
+        html.H1(children='Map of medals won by sport', style={'textAlign': 'center'}),
         dcc.RadioItems(
             id='map_type',
             options=[{'label': i, 'value': i} for i in ['Athletics', 'Gymnastics', 'Swimming', 'Cycling', 'Skiing']],
@@ -238,12 +250,12 @@ app.layout = html.Div(children=[
         ),
         html.Div([
             dcc.Graph(
-                id='sport_fig'
+                id='sport_fig', style={'margin-left': '8%'}
             )
-        ], style={'padding-left': '15%'})
-    ]),
+        ])
+    ], className='container'),
     html.Div([
-        html.H1(children='Best performances by edition', style={'textAlign': 'center', 'margin-top': '60px'}),
+        html.H1(children='Performances by edition', style={'textAlign': 'center'}),
         html.Div([
             dcc.Dropdown(options=[{'label': '100m', 'value': '100m'}, {'label': '200m', 'value': '200m'},
                                   {'label': '400m', 'value': '400m'}, {'label': '800m', 'value': '800m'},
@@ -254,22 +266,26 @@ app.layout = html.Div(children=[
                                   {'label': '10000m', 'value': '10000m'}, {'label': 'marathon', 'value': 'marathon'}
                                   ],
                          value='100m', id='running_type', style={'textAlign': 'center'}),
-        ], style={'width': '20%'}),
+            dcc.RadioItems(options=[{'label': 'men', 'value': 'M'}, {'label': 'women', 'value': 'W'}],
+                           value='M', labelStyle={'display': 'inline-block'}, id='men_women')
+        ], style={'width': '20%', 'textAlign': 'center'}),
+
         dcc.Graph(
-            id='performances_hist'
-        )
-    ]),
+            id='fig_time_year'
+        ),
+        dcc.Graph(
+            id='histogram'
+        ),
+    ], className='container'),
     html.Div([
         html.Div([
-            html.H1(children='Weight/Height by sport (summer editions)',
-                    style={'margin': '15px', 'margin-top': '60px'}),
+            html.H1(children='Weight/Height by sport (summer editions)'),
             html.P(children='click on legend to display particular sports', style={'margin': '15px'}),
-        ]),
+        ], style={'textAlign': 'center'}),
         html.Div([
             dcc.Graph(figure=fig_weight_height),
-            dcc.Graph(figure=fig_weight_height_age)
         ])
-    ], style={'textAlign': 'center'})
+    ], className='container')
 ])
 
 
@@ -277,10 +293,20 @@ app.layout = html.Div(children=[
     Output('medal_fig', 'figure'),
     [Input('graph_type', 'value')])
 def build_graph(graph_type):
-    if graph_type == 'only golden medals':
-        return gold_medal_fig
-    else:
+    if graph_type == 'world':
         return medal_fig
+    if graph_type == 'europe_medals':
+        return px.bar(europe_medals, x='Country', y='count', color='medal',
+                      color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
+    if graph_type == 'america_medals':
+        return px.bar(america_medals, x='Country', y='count', color='medal',
+                      color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
+    if graph_type == 'asia_medals':
+        return px.bar(asia_medals, x='Country', y='count', color='medal',
+                      color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
+    if graph_type == 'africa_medals':
+        return px.bar(africa_medals, x='Country', y='count', color='medal',
+                      color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
 
 
 @app.callback(
@@ -332,13 +358,33 @@ def play(play, pause):
 
 
 @app.callback(
-    Output('performances_hist', 'figure'),
+    Output('fig_time_year', 'figure'),
     Input('running_type', 'value'),
+    Input('men_women', 'value')
 )
-def update_figure(value):
-    return px.bar(running_bar[value], x='year', y='seconds', barmode='group', color='gender',
-                  hover_data=['name', 'country', 'location', 'results'],
-                  range_y=[min(running_bar[value]['seconds']*0.95), max(running_bar[value]['seconds']*1.05)])
+def update_figure(value, gender_choice):
+    performance_df = df2.query("sport == @value and gender == @gender_choice")
+    performance_df = performance_df[(np.abs(stats.zscore(performance_df['seconds'])) < 3)]
+    fig_time_year = px.box(performance_df, x="year", y="seconds")
+    best_men = df2.query("sport == @value and rank == 1 and gender == @gender_choice ")
+    fig_time_year.add_trace(go.Scatter(x=best_men["year"], y=best_men["seconds"], mode="lines", showlegend=False,
+                                       hovertext=best_men['name'] + "\n" + best_men['country']))
+
+    return fig_time_year
+
+
+@app.callback(
+    Output('histogram', 'figure'),
+    Input('running_type', 'value'),
+    Input('men_women', 'value')
+)
+def update_figure(value, gender_choice):
+    performance_df = df2.query("sport == @value and gender == @gender_choice")
+    performance_df = performance_df[(np.abs(stats.zscore(performance_df['seconds'])) < 3)]
+    fig = px.histogram(performance_df, x="seconds")
+    fig.update_layout(barmode='overlay')
+    fig.update_traces(opacity=0.6)
+    return fig
 
 
 @app.callback(
@@ -350,3 +396,12 @@ def update_output(value):
 
 if __name__ == '__main__':
     app.run_server(debug=True)
+
+# TO DO LIST : premier barplot en fontion de amérique europe et asie
+# les chiffres de la map evolutive qui se chevauchent pas et retravailler l'axe des couleurs
+# peut etre indiquer le pays qui organise
+# le 3eme graphique retravailler l'échelle et peut etre rajouter des domaines
+# les meilleures performances prendre l'autre avec courbe plus boxplot, enlever les outlier, segmenter homme femme
+# meilleures hover data
+# generaliser ce dernier graph avec plus de domain et de sport
+# sur l'histograme plus de bins

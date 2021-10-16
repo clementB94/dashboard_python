@@ -1,3 +1,19 @@
 body {
     font-family: 'Montserrat', sans-serif;
+    background: #f4f4f4;
 }
+
+.background{
+ background: #f4f4f4;
+ }
+
+ .container{
+ border-radius: 30px;
+ margin: 3%;
+ background: #FFFFFF;
+ padding: 2%
+ }
+
+ .slider{
+    font-size: 16px;
+ }
