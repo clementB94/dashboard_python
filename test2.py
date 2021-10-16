@@ -91,47 +91,24 @@ for year in world_medals_time.keys():
 
 year_slider = {str(year): '{}'.format(year) for year in years}
 
-# creating dataframe of medals by country but only on specific events type
 
-running_medals = df1[['NOC', 'Medal']].loc[df1['Sport'] == 'Athletics'].dropna().value_counts()
-running_medals = pd.DataFrame({'Country': running_medals.index.get_level_values(0),
-                               'medal': running_medals.index.get_level_values(1), 'count': running_medals.values})
-running_medals = running_medals.pivot(index='Country', columns='medal', values='count')
-running_medals.fillna(0, inplace=True)
-running_medals.reset_index(inplace=True)
-running_medals['Total number of medals'] = running_medals['Gold'] + running_medals['Silver'] + running_medals['Bronze']
+# generate map depending on sport
 
-gym_medals = df1[['NOC', 'Medal']].loc[df1['Sport'] == 'Gymnastics'].dropna().value_counts()
-gym_medals = pd.DataFrame({'Country': gym_medals.index.get_level_values(0),
-                           'medal': gym_medals.index.get_level_values(1), 'count': gym_medals.values})
-gym_medals = gym_medals.pivot(index='Country', columns='medal', values='count')
-gym_medals.fillna(0, inplace=True)
-gym_medals.reset_index(inplace=True)
-gym_medals['Total number of medals'] = gym_medals['Gold'] + gym_medals['Silver'] + gym_medals['Bronze']
 
-swim_medals = df1[['NOC', 'Medal']].loc[df1['Sport'] == 'Swimming'].dropna().value_counts()
-swim_medals = pd.DataFrame({'Country': swim_medals.index.get_level_values(0),
-                            'medal': swim_medals.index.get_level_values(1), 'count': swim_medals.values})
-swim_medals = swim_medals.pivot(index='Country', columns='medal', values='count')
-swim_medals.fillna(0, inplace=True)
-swim_medals.reset_index(inplace=True)
-swim_medals['Total number of medals'] = swim_medals['Gold'] + swim_medals['Silver'] + swim_medals['Bronze']
+def gen_medals_by_sport(sport):
+    df_medals = df1[['NOC', 'Medal']].loc[df1['Sport'].str.contains(sport)].dropna().value_counts()
+    df_medals = pd.DataFrame({'Country': df_medals.index.get_level_values(0),
+                              'medal': df_medals.index.get_level_values(1), 'count': df_medals.values})
+    df_medals = df_medals.pivot(index='Country', columns='medal', values='count')
+    df_medals.fillna(0, inplace=True)
+    df_medals.reset_index(inplace=True)
+    df_medals['Total number of medals'] = df_medals['Gold'] + df_medals['Silver'] + df_medals['Bronze']
+    df_medals['Country'].replace(noc_to_iso, inplace=True)
+    sport_fig = px.choropleth(df_medals, locations='Country', color='Total number of medals',
+                              hover_data=['Gold', 'Silver', 'Bronze'],
+                              color_continuous_scale=px.colors.sequential.Redor, width=1100, height=550)
+    return sport_fig
 
-cycle_medals = df1[['NOC', 'Medal']].loc[df1['Sport'] == 'Cycling'].dropna().value_counts()
-cycle_medals = pd.DataFrame({'Country': cycle_medals.index.get_level_values(0),
-                             'medal': cycle_medals.index.get_level_values(1), 'count': cycle_medals.values})
-cycle_medals = cycle_medals.pivot(index='Country', columns='medal', values='count')
-cycle_medals.fillna(0, inplace=True)
-cycle_medals.reset_index(inplace=True)
-cycle_medals['Total number of medals'] = cycle_medals['Gold'] + cycle_medals['Silver'] + cycle_medals['Bronze']
-
-ski_medals = df1[['NOC', 'Medal']].loc[df1['Sport'].str.contains('Skiing')].dropna().value_counts()
-ski_medals = pd.DataFrame({'Country': ski_medals.index.get_level_values(0),
-                           'medal': ski_medals.index.get_level_values(1), 'count': ski_medals.values})
-ski_medals = ski_medals.pivot(index='Country', columns='medal', values='count')
-ski_medals.fillna(0, inplace=True)
-ski_medals.reset_index(inplace=True)
-ski_medals['Total number of medals'] = ski_medals['Gold'] + ski_medals['Silver'] + ski_medals['Bronze']
 
 # creating dataframe for performances histogram
 
@@ -141,17 +118,32 @@ fig_time_year = px.box(df2, x="year", y="seconds")
 fig_time_year.update_traces(quartilemethod="exclusive")
 fig = px.histogram(df2, x="seconds")
 
+# generate dataframe for medal per gpd and medals per population
+
+gpd_df = df1[['Team', 'Medal']].value_counts()
+gpd_df = pd.DataFrame({'Country': gpd_df.index.get_level_values(0),
+                       'medal': gpd_df.index.get_level_values(1), 'count': gpd_df.values})
+gpd_df = gpd_df.pivot(index='Country', columns='medal', values='count')
+gpd_df.fillna(0, inplace=True)
+gpd_df.reset_index(inplace=True)
+gpd_df['Total number of medals'] = gpd_df['Gold'] + gpd_df['Silver'] + gpd_df['Bronze']
+
+df4 = pd.read_csv('API_NY.GDP.MKTP.CD_DS2_en_csv_v2_3052552.csv')
+df4 = df4[['Country Name', '2020']]
+gpd_df = pd.merge(left=gpd_df, right=df4, left_on='Country', right_on='Country Name')
+gpd_df = gpd_df.rename(columns={'2020': 'GDP 2020'})
+gpd_df['Log GDP'] = np.log(gpd_df['GDP 2020'])
+
+df5 = pd.read_csv('population-figures-by-country-csv_csv.csv')
+df5 = df5[['Country', 'Year_2016']]
+gpd_df = pd.merge(left=gpd_df, right=df5, left_on='Country', right_on='Country')
+gpd_df = gpd_df.rename(columns={'Year_2016': 'Population 2016'})
+gpd_df['Log Population'] = np.log(gpd_df['Population 2016'])
+print(gpd_df)
+
 # Convert NOC into countries names
 
 medals['Country'].replace(country_name_table, inplace=True)
-
-# Convert NOC into ISO
-
-running_medals['Country'].replace(noc_to_iso, inplace=True)
-gym_medals['Country'].replace(noc_to_iso, inplace=True)
-swim_medals['Country'].replace(noc_to_iso, inplace=True)
-cycle_medals['Country'].replace(noc_to_iso, inplace=True)
-ski_medals['Country'].replace(noc_to_iso, inplace=True)
 
 # Couleurs qu'on va ptet utilsier plus tard
 
@@ -175,40 +167,13 @@ fig_weight_height.update_traces(textposition='middle right', textfont_size=8)
 medal_fig = px.bar(medals, x='Country', y='count', color='medal',
                    color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
 
-# map figures
-
-running_fig = px.choropleth(running_medals, locations='Country',
-                            color='Total number of medals',
-                            hover_data=['Gold', 'Silver', 'Bronze'],
-                            color_continuous_scale=px.colors.sequential.Redor, width=1100, height=550)
-
-gym_fig = px.choropleth(gym_medals, locations='Country',
-                        color='Total number of medals',
-                        hover_data=['Gold', 'Silver', 'Bronze'],
-                        color_continuous_scale=px.colors.sequential.Redor, width=1100, height=550)
-
-swim_fig = px.choropleth(swim_medals, locations='Country',
-                         color='Total number of medals',
-                         hover_data=['Gold', 'Silver', 'Bronze'],
-                         color_continuous_scale=px.colors.sequential.Redor, width=1100, height=550)
-
-cycle_fig = px.choropleth(cycle_medals, locations='Country',
-                          color='Total number of medals',
-                          hover_data=['Gold', 'Silver', 'Bronze'],
-                          color_continuous_scale=px.colors.sequential.Redor, width=1100, height=550)
-
-ski_fig = px.choropleth(ski_medals, locations='Country',
-                        color='Total number of medals',
-                        hover_data=['Gold', 'Silver', 'Bronze'],
-                        color_continuous_scale=px.colors.sequential.Redor, width=1100, height=550)
-
 # Start of the application
 
 app = dash.Dash(__name__)
 
 app.layout = html.Div(className='background', children=[
     html.Div([
-        html.H1(children='Olympic Games Dashboard', style={'textAlign': 'center'}),
+        html.H1(children='Olympic Games Dashboard', style={'textAlign': 'center', 'font-size': '48px'}),
     ]),
     html.Div([
         html.H1(children='Total amount of medals', style={'textAlign': 'center'}),
@@ -243,7 +208,8 @@ app.layout = html.Div(className='background', children=[
         html.H1(children='Map of medals won by sport', style={'textAlign': 'center'}),
         dcc.RadioItems(
             id='map_type',
-            options=[{'label': i, 'value': i} for i in ['Athletics', 'Gymnastics', 'Swimming', 'Cycling', 'Skiing']],
+            options=[{'label': i, 'value': i} for i in ['Athletics', 'Gymnastics', 'Swimming', 'Cycling', 'Skiing',
+                                                        'Wrestling', 'Shooting', 'Canoeing']],
             value='Athletics',
             labelStyle={'display': 'inline-block'},
             style={'fontSize': 20, 'textAlign': 'center'},
@@ -268,7 +234,7 @@ app.layout = html.Div(className='background', children=[
                          value='100m', id='running_type', style={'textAlign': 'center'}),
             dcc.RadioItems(options=[{'label': 'men', 'value': 'M'}, {'label': 'women', 'value': 'W'}],
                            value='M', labelStyle={'display': 'inline-block'}, id='men_women')
-        ], style={'width': '20%', 'textAlign': 'center'}),
+        ], style={'textAlign': 'center'}),
 
         dcc.Graph(
             id='fig_time_year'
@@ -285,6 +251,19 @@ app.layout = html.Div(className='background', children=[
         html.Div([
             dcc.Graph(figure=fig_weight_height),
         ])
+    ], className='container'),
+    html.Div(children=[
+        html.H1(children='Medal count by GDP and Population', style={'textAlign': 'center'}),
+        html.Div(children=[
+            dcc.Graph(figure=px.scatter(gpd_df, x='Log GDP', y='Total number of medals',
+                                        hover_data=['GDP 2020', 'Country'],
+                                        trendline="ols"),
+                      style={'display': 'inline-block', 'width': '50%'}),
+            dcc.Graph(figure=px.scatter(gpd_df, x='Log Population', y='Total number of medals',
+                                        hover_data=['Population 2016', 'Country'],
+                                        trendline="ols"),
+                      style={'display': 'inline-block', 'width': '50%'})
+        ]),
     ], className='container')
 ])
 
@@ -312,17 +291,8 @@ def build_graph(graph_type):
 @app.callback(
     Output('sport_fig', 'figure'),
     [Input('map_type', 'value')])
-def build_graph(map_type):
-    if map_type == 'Athletics':
-        return running_fig
-    if map_type == 'Gymnastics':
-        return gym_fig
-    if map_type == 'Swimming':
-        return swim_fig
-    if map_type == 'Cycling':
-        return cycle_fig
-    if map_type == 'Skiing':
-        return ski_fig
+def build_graph(value):
+    return gen_medals_by_sport(value)
 
 
 @app.callback(
@@ -368,7 +338,7 @@ def update_figure(value, gender_choice):
     fig_time_year = px.box(performance_df, x="year", y="seconds")
     best_men = df2.query("sport == @value and rank == 1 and gender == @gender_choice ")
     fig_time_year.add_trace(go.Scatter(x=best_men["year"], y=best_men["seconds"], mode="lines", showlegend=False,
-                                       hovertext=best_men['name'] + "\n" + best_men['country']))
+                                       hovertext=best_men['name'] + " " + best_men['country'] + " " + best_men['results']))
 
     return fig_time_year
 
@@ -397,11 +367,8 @@ def update_output(value):
 if __name__ == '__main__':
     app.run_server(debug=True)
 
-# TO DO LIST : premier barplot en fontion de amérique europe et asie
+# TO DO LIST :
 # les chiffres de la map evolutive qui se chevauchent pas et retravailler l'axe des couleurs
 # peut etre indiquer le pays qui organise
-# le 3eme graphique retravailler l'échelle et peut etre rajouter des domaines
-# les meilleures performances prendre l'autre avec courbe plus boxplot, enlever les outlier, segmenter homme femme
-# meilleures hover data
+
 # generaliser ce dernier graph avec plus de domain et de sport
-# sur l'histograme plus de bins
