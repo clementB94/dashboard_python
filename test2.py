@@ -139,7 +139,6 @@ df5 = df5[['Country', 'Year_2016']]
 gpd_df = pd.merge(left=gpd_df, right=df5, left_on='Country', right_on='Country')
 gpd_df = gpd_df.rename(columns={'Year_2016': 'Population 2016'})
 gpd_df['Log Population'] = np.log(gpd_df['Population 2016'])
-print(gpd_df)
 
 # Convert NOC into countries names
 
@@ -200,7 +199,7 @@ app.layout = html.Div(className='background', children=[
             html.Button('play', id='play'),
             html.Button('pause', id='pause')
         ], style={'textAlign': 'center'}),
-        dcc.Slider(id="year_slider", marks=year_slider, step=None, min=1896, max=2016, value=2016, className='slider'),
+        dcc.Slider(id="year_slider", marks=year_slider, step=None, min=1896, max=2016, value=2016),
         dcc.Interval(id='interval', interval=500, n_intervals=0, disabled=True),
     ], className='container'),
 
