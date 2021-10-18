@@ -16,7 +16,7 @@ pd.options.mode.chained_assignment = None
 df1 = pd.read_csv('athlete_events.csv')
 df1 = df1.drop_duplicates(subset=['Team', 'Games', 'Year', 'City', 'Sport', 'Event', 'Medal'])
 
-df2 = pd.read_csv('running_times.csv')
+df_running_times = pd.read_csv('running_times.csv')
 
 # conversion tables
 
@@ -112,11 +112,17 @@ def gen_medals_by_sport(sport):
 
 # creating dataframe for performances histogram
 
-df2 = pd.read_csv('running_times.csv')
-df2['seconds'] = pd.to_timedelta(df2['results']).dt.total_seconds()
-fig_time_year = px.box(df2, x="year", y="seconds")
-fig_time_year.update_traces(quartilemethod="exclusive")
-fig = px.histogram(df2, x="seconds")
+df_running_times = pd.read_csv('running_times.csv')
+df_running_times['Performance'] = pd.to_timedelta(df_running_times['results']).dt.total_seconds()
+
+df_athletics_results = pd.read_csv('athletics_results.csv')
+for i, result in enumerate(df_athletics_results['results']):    # some results aren't in good format
+    if result == 'mark unknown':
+        df_athletics_results.drop(i, inplace=True)
+    elif result[-1].isalpha():
+        df_athletics_results['results'][i] = result[0:-1]
+df_athletics_results['Performance'] = df_athletics_results['results'].astype(float)
+df_performance = df_athletics_results.append(df_running_times)
 
 # generate dataframe for medal per gpd and medals per population
 
@@ -207,8 +213,9 @@ app.layout = html.Div(className='background', children=[
         html.H1(children='Map of medals won by sport', style={'textAlign': 'center'}),
         dcc.RadioItems(
             id='map_type',
-            options=[{'label': i, 'value': i} for i in ['Athletics', 'Gymnastics', 'Swimming', 'Cycling', 'Skiing',
-                                                        'Wrestling', 'Shooting', 'Canoeing']],
+            options=[{'label': i, 'value': i} for i in ['Athletics', 'Gymnastics', 'Swimming', 'Cycling', 'Ski',
+                                                        'Wrestling', 'Shooting', 'Canoeing', 'Skating', 'Fencing',
+                                                        'Archery', 'Rowing']],
             value='Athletics',
             labelStyle={'display': 'inline-block'},
             style={'fontSize': 20, 'textAlign': 'center'},
@@ -222,17 +229,21 @@ app.layout = html.Div(className='background', children=[
     html.Div([
         html.H1(children='Performances by edition', style={'textAlign': 'center'}),
         html.Div([
-            dcc.Dropdown(options=[{'label': '100m', 'value': '100m'}, {'label': '200m', 'value': '200m'},
-                                  {'label': '400m', 'value': '400m'}, {'label': '800m', 'value': '800m'},
-                                  {'label': '110m hurdles (men only)', 'value': '110m hurdles'},
-                                  {'label': '100m hurdles (women only)', 'value': '100m hurdles'},
-                                  {'label': '400m hurdles', 'value': '400m hurdles'},
-                                  {'label': '1500m', 'value': '1500m'}, {'label': '5000m', 'value': '5000m'},
-                                  {'label': '10000m', 'value': '10000m'}, {'label': 'marathon', 'value': 'marathon'}
-                                  ],
-                         value='100m', id='running_type', style={'textAlign': 'center'}),
+            html.Div(children=['Type of sport : '], style={'display': 'inline-block', 'margin-right': '15px'}),
+            dcc.Dropdown(options=[{'label': 'running', 'value': 'running'},
+                                  {'label': 'athletics', 'value': 'athletics'}],
+                         value='running', id='sport_type',
+                         style={'display': 'inline-block', 'width': '150px',
+                                'margin-right': '35px', 'verticalAlign': 'middle'}),
+            html.Div(children=['Sport : '], style={'display': 'inline-block', 'margin-right': '15px'}),
+            dcc.Dropdown(options=[{'label': sport, 'value': sport}
+                                  for sport in df_running_times['sport'].unique()],
+                         value='100m', id='running_type',
+                         style={'display': 'inline-block', 'width': '150px',
+                                'margin-right': '55px', 'verticalAlign': 'middle'}),
             dcc.RadioItems(options=[{'label': 'men', 'value': 'M'}, {'label': 'women', 'value': 'W'}],
-                           value='M', labelStyle={'display': 'inline-block'}, id='men_women')
+                           value='M', labelStyle={'display': 'inline-block'}, id='men_women',
+                           style={'display': 'inline-block'})
         ], style={'textAlign': 'center'}),
 
         dcc.Graph(
@@ -327,39 +338,59 @@ def play(play, pause):
 
 
 @app.callback(
+    Output('running_type', 'options'),
+    Output('running_type', 'value'),
+    Input('sport_type', 'value')
+)
+def update_dropdown(value):
+    if value == 'running':
+        options = [{'label': sport, 'value': sport}
+                   for sport in df_running_times['sport'].unique()]
+        return options, '100m'
+    else:
+        options = [{'label': sport, 'value': sport}
+                   for sport in df_athletics_results['sport'].unique()]
+        return options, 'discus throw'
+
+
+
+@app.callback(
     Output('fig_time_year', 'figure'),
     Input('running_type', 'value'),
-    Input('men_women', 'value')
+    Input('men_women', 'value'),
+    Input('sport_type', 'value')
 )
-def update_figure(value, gender_choice):
-    performance_df = df2.query("sport == @value and gender == @gender_choice")
-    performance_df = performance_df[(np.abs(stats.zscore(performance_df['seconds'])) < 3)]
-    fig_time_year = px.box(performance_df, x="year", y="seconds")
-    best = performance_df.query("rank == 1")
-    fig_time_year.add_trace(go.Scatter(x=best["year"], y=best["seconds"], mode="lines", showlegend=False,
-                                       hovertext=best['name'] + " " + best['country'] + " " + best['results']))
-    fig_time_year = fig_time_year.update_xaxes(gridwidth = 1, tickmode="array", tickvals=best["year"])
-
-    return fig_time_year
+def update_figure(value, gender_choice, sport_type):
+    performance_df = df_performance.query("sport == @value and gender == @gender_choice")
+    if sport_type == 'running':
+        performance_df = performance_df[(np.abs(stats.zscore(performance_df['Performance'])) < 3)]
+    fig_box_performance = px.box(performance_df, x="year", y="Performance")
+    fig_box_performance.update_traces(quartilemethod="exclusive")
+    best = performance_df.query("sport == @value and rank == 1 and gender == @gender_choice ")
+    fig_box_performance.add_trace(go.Scatter(x=best["year"], y=best["Performance"], mode="lines", showlegend=False,
+                                             hovertext=best['name'] + " " + best['country'] + " " + best['results']))
+    return fig_box_performance
 
 
 @app.callback(
     Output('histogram', 'figure'),
     Input('running_type', 'value'),
-    Input('men_women', 'value')
+    Input('men_women', 'value'),
+    Input('sport_type', 'value')
 )
-def update_figure(value, gender_choice):
-    performance_df = df2.query("sport == @value and gender == @gender_choice")
-    performance_df = performance_df[(np.abs(stats.zscore(performance_df['seconds'])) < 3)]
-    fig = px.histogram(performance_df, x="seconds")
-    fig.update_layout(barmode='overlay')
-    fig.update_traces(opacity=0.6)
-    return fig
+def update_figure(value, gender_choice, sport_type):
+    performance_df = df_performance.query("sport == @value and gender == @gender_choice")
+    if sport_type == 'running':
+        performance_df = performance_df[(np.abs(stats.zscore(performance_df['Performance'])) < 3)]
+    fig_hist_performance = px.histogram(performance_df, x="Performance")
+    fig_hist_performance.update_layout(barmode='overlay').update_traces(opacity=0.6)
+    return fig_hist_performance
 
 
 @app.callback(
-    dash.dependencies.Output('slider-output-container', 'children'),
-    [dash.dependencies.Input('year_slider', 'value')])
+    Output('slider-output-container', 'children'),
+    Input('year_slider', 'value')
+)
 def update_output(value):
     return 'Map of the year {}'.format(value)
 
@@ -368,7 +399,6 @@ if __name__ == '__main__':
     app.run_server(debug=True)
 
 # TO DO LIST :
-# Map évolutive retravailler l'axe des couleurs ?
+# map evolutive : retravailler l'axe des couleurs
 # peut etre indiquer le pays qui organise
-
 # generaliser ce dernier graph avec plus de domain et de sport
