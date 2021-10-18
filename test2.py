@@ -224,8 +224,8 @@ app.layout = html.Div(className='background', children=[
         html.Div([
             dcc.Dropdown(options=[{'label': '100m', 'value': '100m'}, {'label': '200m', 'value': '200m'},
                                   {'label': '400m', 'value': '400m'}, {'label': '800m', 'value': '800m'},
-                                  {'label': '110m hurdles', 'value': '110m hurdles'},
-                                  {'label': '100m hurdles', 'value': '100m hurdles'},
+                                  {'label': '110m hurdles (men only)', 'value': '110m hurdles'},
+                                  {'label': '100m hurdles (women only)', 'value': '100m hurdles'},
                                   {'label': '400m hurdles', 'value': '400m hurdles'},
                                   {'label': '1500m', 'value': '1500m'}, {'label': '5000m', 'value': '5000m'},
                                   {'label': '10000m', 'value': '10000m'}, {'label': 'marathon', 'value': 'marathon'}
@@ -335,9 +335,10 @@ def update_figure(value, gender_choice):
     performance_df = df2.query("sport == @value and gender == @gender_choice")
     performance_df = performance_df[(np.abs(stats.zscore(performance_df['seconds'])) < 3)]
     fig_time_year = px.box(performance_df, x="year", y="seconds")
-    best_men = df2.query("sport == @value and rank == 1 and gender == @gender_choice ")
-    fig_time_year.add_trace(go.Scatter(x=best_men["year"], y=best_men["seconds"], mode="lines", showlegend=False,
-                                       hovertext=best_men['name'] + " " + best_men['country'] + " " + best_men['results']))
+    best = performance_df.query("rank == 1")
+    fig_time_year.add_trace(go.Scatter(x=best["year"], y=best["seconds"], mode="lines", showlegend=False,
+                                       hovertext=best['name'] + " " + best['country'] + " " + best['results']))
+    fig_time_year = fig_time_year.update_xaxes(gridwidth = 1, tickmode="array", tickvals=best["year"])
 
     return fig_time_year
 
@@ -367,7 +368,7 @@ if __name__ == '__main__':
     app.run_server(debug=True)
 
 # TO DO LIST :
-# les chiffres de la map evolutive qui se chevauchent pas et retravailler l'axe des couleurs
+# Map évolutive retravailler l'axe des couleurs ?
 # peut etre indiquer le pays qui organise
 
 # generaliser ce dernier graph avec plus de domain et de sport

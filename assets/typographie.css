@@ -17,3 +17,7 @@ body {
  .slider{
     font-size: 16px;
  }
+
+.rc-slider-mark-text{
+    transform: rotate(50deg) !important;
+}
