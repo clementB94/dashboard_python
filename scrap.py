@@ -6,7 +6,8 @@ import re
 import csv
 
 class MyHTMLParser(HTMLParser):
-    def __init__(self):
+    def __init__(self, resultAsTime=False):
+        self.resultAsTime = resultAsTime
         self.getvalue = False
         self.data = []
         self.row = []
@@ -35,32 +36,29 @@ class MyHTMLParser(HTMLParser):
         final_row.append(self.row[0])  #Rank
         final_row.append(self.row[3])  #Name
         final_row.append(self.row[2])  #Country
-        result = self.row[5]
-        #Format correct : 1:01:01.01
-        if not re.match('(\d+):(\d+):(\d+\.\d+)$', result):
-            # print("before",result)
-            #format 1h01:01
-            if re.match('(\d+)h(\d+):(\d+)', result):
-                result = re.sub("(\d+)h(\d+):(\d+)", "\\1:\\2:\\3", result)
-            #format 1:01.01
-            elif re.match('(\d+):(\d+)', result):
-                result = re.sub("(\d+):(\d+)", "0:\\1:\\2", result)
-            #format 1.01
-            elif re.match('(\d+\.\d+)', result):
-                result = re.sub("(\d+\.\d+)", "0:00:\\1", result)
-            else: return
-            # format (pas de texte après le temps)
-            if not re.match('(\d+:\d+:\d+\.?\d*)$', result):
-                result = re.sub("(\d+:\d+:\d+\.?\d*)(.*)", "\\1", result)
-            #FORMATTAGE (1:1:1.10 -> 1:01:1.10)
-            splitr = result.split(":")
-            result = "{}:{:02d}:{}".format(splitr[0],int(splitr[1]),splitr[2])
-            
-            
-        
-            
-        final_row.append(result)
-
+        if self.resultAsTime :
+            result = self.row[5]
+            #Format correct : 1:01:01.01
+            if not re.match('(\d+):(\d+):(\d+\.\d+)$', result):
+                # print("before",result)
+                #format 1h01:01
+                if re.match('(\d+)h(\d+):(\d+)', result):
+                    result = re.sub("(\d+)h(\d+):(\d+)", "\\1:\\2:\\3", result)
+                #format 1:01.01
+                elif re.match('(\d+):(\d+)', result):
+                    result = re.sub("(\d+):(\d+)", "0:\\1:\\2", result)
+                #format 1.01
+                elif re.match('(\d+\.\d+)', result):
+                    result = re.sub("(\d+\.\d+)", "0:00:\\1", result)
+                else: return
+                # format (pas de texte après le temps)
+                if not re.match('(\d+:\d+:\d+\.?\d*)$', result):
+                    result = re.sub("(\d+:\d+:\d+\.?\d*)(.*)", "\\1", result)
+                #FORMATTAGE (1:1:1.10 -> 1:01:1.10)
+                splitr = result.split(":")
+                result = "{}:{:02d}:{}".format(splitr[0],int(splitr[1]),splitr[2])
+                final_row.append(result)
+        final_row.append(self.row[5])
         self.data.append(final_row)
 
     def scan(self, data, game, sport):
@@ -73,6 +71,17 @@ class MyHTMLParser(HTMLParser):
         self.infos.append(gameSplitted[-1]) #Year
         self.feed(data)
     
+
+
+class Sports:
+    def __init__(self, category, sports, outputFile, time=False):
+        self.category = category
+        self.sports = sports
+        self.outputFile = outputFile
+        self.time = time
+        #ajout season pour les jeux d'hiver
+
+#Jeux
 summerGames = ['rio-2016', 'london-2012', 'beijing-2008', 'athens-2004', 'sydney-2000', 'atlanta-1996',
             'barcelona-1992', 'seoul-1988', 'los-angeles-1984', 'moscow-1980', 'montreal-1976', 'munich-1972',
             'mexico-city-1968', 'tokyo-1964', 'rome-1960', 'melbourne-1956', 'helsinki-1952', 'london-1948', 'berlin-1936'
@@ -83,15 +92,26 @@ sportsRunning = ['100m-men', '100m-women', '200m-men', '200m-women', '400m-men',
                 '110m-hurdles-men', '100m-hurdles-women', '400m-hurdles-men', '400m-hurdles-women', '1500m-men', '1500m-women',
                 '5000m-men','5000m-women','10000m-men','10000m-women','marathon-men','marathon-women']
 
+sportsAthletics = ['discus-throw-men','discus-throw-women','hammer-throw-men','hammer-throw-women','high-jump-men','high-jump-women',
+                    'javelin-throw-men','javelin-throw-women','long-jump-men','long-jump-women','pole-vault-men','pole-vault-women',
+                    'shot-put-men', 'shot-put-women','triple-jump-men','triple-jump-women']
 
 fields = ["gender", "sport", "location", "year", "rank", "name", "country","results"]
 
 
-parser = MyHTMLParser()
+
+
+running = Sports('athletics',sportsRunning,'running_times.csv', time = True)
+athletics = Sports('athletics',sportsAthletics, 'athletics_results.csv')
+#Changer pour selectionner :
+sportsSelected = athletics
+
+
+parser = MyHTMLParser(sportsSelected.time)
 for game in summerGames:
-    for sport in sportsRunning:
+    for sport in sportsSelected.sports:
         try:
-            url = 'https://olympics.com/en/olympic-games/' + game + '/results/athletics/' + sport
+            url = 'https://olympics.com/en/olympic-games/' + game + '/results/'+ sportsSelected.category + '/' + sport
             u = urllib.request.urlopen(url)
             data = u.read().decode('utf8')
             parser.scan(data,game,sport)
@@ -100,8 +120,7 @@ for game in summerGames:
 
 print(parser.data)
 
-#TODO : Est-ce que ça ne serait pas mieux d'écrire au fur et a mesure (pas besoin de stocker de liste parser.data) ?
-with open('running_times.csv', 'w', encoding="utf-8") as f:
+with open(sportsSelected.outputFile, 'w', encoding="utf-8") as f:
     writer = csv.writer(f)
     writer.writerow(fields)
     writer.writerows(parser.data)
