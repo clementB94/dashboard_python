@@ -122,7 +122,14 @@ for i, result in enumerate(df_athletics_results['results']):    # some results a
     elif result[-1].isalpha():
         df_athletics_results['results'][i] = result[0:-1]
 df_athletics_results['Performance'] = df_athletics_results['results'].astype(float)
-df_performance = df_athletics_results.append(df_running_times)
+
+df_swimming_results = pd.read_csv('swimming_results.csv')
+df_swimming_results['Performance'] = pd.to_timedelta(df_swimming_results['results']).dt.total_seconds()
+
+df_skiing_results = pd.read_csv('skiing_results.csv')
+df_skiing_results['Performance'] = pd.to_timedelta(df_skiing_results['results']).dt.total_seconds()
+
+df_performance = df_athletics_results.append(df_running_times).append(df_swimming_results).append(df_skiing_results)
 
 # generate dataframe for medal per gpd and medals per population
 
@@ -215,7 +222,9 @@ app.layout = html.Div(className='background', children=[
             id='map_type',
             options=[{'label': i, 'value': i} for i in ['Athletics', 'Gymnastics', 'Swimming', 'Cycling', 'Ski',
                                                         'Wrestling', 'Shooting', 'Canoeing', 'Skating', 'Fencing',
-                                                        'Archery', 'Rowing']],
+                                                        'Archery', 'Rowing', 'Football', 'Volleyball', 'Diving',
+                                                        'Equestrianism', 'Sailing', 'Weightlifting', 'Basketball',
+                                                        'Hockey', 'Boxing', 'Art Competitions']],
             value='Athletics',
             labelStyle={'display': 'inline-block'},
             style={'fontSize': 20, 'textAlign': 'center'},
@@ -231,7 +240,9 @@ app.layout = html.Div(className='background', children=[
         html.Div([
             html.Div(children=['Type of sport : '], style={'display': 'inline-block', 'margin-right': '15px'}),
             dcc.Dropdown(options=[{'label': 'running', 'value': 'running'},
-                                  {'label': 'athletics', 'value': 'athletics'}],
+                                  {'label': 'athletics', 'value': 'athletics'},
+                                  {'label': 'swimming', 'value': 'swimming'},
+                                  {'label': 'skiing', 'value': 'skiing'}],
                          value='running', id='sport_type',
                          style={'display': 'inline-block', 'width': '150px',
                                 'margin-right': '35px', 'verticalAlign': 'middle'}),
@@ -347,10 +358,18 @@ def update_dropdown(value):
         options = [{'label': sport, 'value': sport}
                    for sport in df_running_times['sport'].unique()]
         return options, '100m'
-    else:
+    elif value == 'swimming':
+        options = [{'label': sport, 'value': sport}
+                   for sport in df_swimming_results['sport'].unique()]
+        return options, '100m backstroke'
+    elif value == 'athletics':
         options = [{'label': sport, 'value': sport}
                    for sport in df_athletics_results['sport'].unique()]
         return options, 'discus throw'
+    else:
+        options = [{'label': sport, 'value': sport}
+                   for sport in df_skiing_results['sport'].unique()]
+        return options, 'alpine combined'
 
 
 
