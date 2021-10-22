@@ -1,22 +1,28 @@
 import dash
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import numpy as np
 from dash import Input
 from dash import Output
 from dash import dcc
 from dash import html
-import plotly.graph_objects as go
 from scipy import stats
 
 pd.options.mode.chained_assignment = None
 
-# importing datasets
+
+################################################
+# DATA IMPORTATION,PREPARATION AND AGGREGATION #
+################################################
+
+# importing the main dataset
 
 df1 = pd.read_csv('athlete_events.csv')
+# some team event count for multiples medals while in reality it counts for only one
 df1 = df1.drop_duplicates(subset=['Team', 'Games', 'Year', 'City', 'Sport', 'Event', 'Medal'])
 
-df_running_times = pd.read_csv('running_times.csv')
+df_running_times = pd.read_csv('running_results.csv')
 
 # conversion tables
 
@@ -94,8 +100,16 @@ year_slider = {str(year): '{}'.format(year) for year in years}
 
 # generate map depending on sport
 
-
 def gen_medals_by_sport(sport):
+    """
+        Generate a choropleth map of medals won by country on a specific sport.
+
+        Args:
+            sport: a sport name among all those of the Olympics
+
+        Returns:
+            a choropleth map figure
+    """
     df_medals = df1[['NOC', 'Medal']].loc[df1['Sport'].str.contains(sport)].dropna().value_counts()
     df_medals = pd.DataFrame({'Country': df_medals.index.get_level_values(0),
                               'medal': df_medals.index.get_level_values(1), 'count': df_medals.values})
@@ -112,11 +126,11 @@ def gen_medals_by_sport(sport):
 
 # creating dataframe for performances histogram
 
-df_running_times = pd.read_csv('running_times.csv')
+df_running_times = pd.read_csv('running_results.csv')
 df_running_times['Performance'] = pd.to_timedelta(df_running_times['results']).dt.total_seconds()
 
 df_athletics_results = pd.read_csv('athletics_results.csv')
-for i, result in enumerate(df_athletics_results['results']):    # some results aren't in good format
+for i, result in enumerate(df_athletics_results['results']):  # some results aren't in good format
     if result == 'mark unknown':
         df_athletics_results.drop(i, inplace=True)
     elif result[-1].isalpha():
@@ -126,10 +140,7 @@ df_athletics_results['Performance'] = df_athletics_results['results'].astype(flo
 df_swimming_results = pd.read_csv('swimming_results.csv')
 df_swimming_results['Performance'] = pd.to_timedelta(df_swimming_results['results']).dt.total_seconds()
 
-df_skiing_results = pd.read_csv('skiing_results.csv')
-df_skiing_results['Performance'] = pd.to_timedelta(df_skiing_results['results']).dt.total_seconds()
-
-df_performance = df_athletics_results.append(df_running_times).append(df_swimming_results).append(df_skiing_results)
+df_performance = df_athletics_results.append(df_running_times).append(df_swimming_results)
 
 # generate dataframe for medal per gpd and medals per population
 
@@ -141,13 +152,13 @@ gpd_df.fillna(0, inplace=True)
 gpd_df.reset_index(inplace=True)
 gpd_df['Total number of medals'] = gpd_df['Gold'] + gpd_df['Silver'] + gpd_df['Bronze']
 
-df4 = pd.read_csv('API_NY.GDP.MKTP.CD_DS2_en_csv_v2_3052552.csv')
+df4 = pd.read_csv('GDP.csv')
 df4 = df4[['Country Name', '2020']]
 gpd_df = pd.merge(left=gpd_df, right=df4, left_on='Country', right_on='Country Name')
 gpd_df = gpd_df.rename(columns={'2020': 'GDP 2020'})
 gpd_df['Log GDP'] = np.log(gpd_df['GDP 2020'])
 
-df5 = pd.read_csv('population-figures-by-country-csv_csv.csv')
+df5 = pd.read_csv('Population.csv')
 df5 = df5[['Country', 'Year_2016']]
 gpd_df = pd.merge(left=gpd_df, right=df5, left_on='Country', right_on='Country')
 gpd_df = gpd_df.rename(columns={'Year_2016': 'Population 2016'})
@@ -156,13 +167,6 @@ gpd_df['Log Population'] = np.log(gpd_df['Population 2016'])
 # Convert NOC into countries names
 
 medals['Country'].replace(country_name_table, inplace=True)
-
-# Couleurs qu'on va ptet utilsier plus tard
-
-colors = {
-    'background': '#2D2D2D',
-    'text': '#E1E2E5',
-}
 
 # Weight/Height by sport
 
@@ -174,10 +178,10 @@ fig_weight_height.layout.yaxis2.update(matches=None)
 fig_weight_height.layout.xaxis2.update(matches=None)
 fig_weight_height.update_traces(textposition='middle right', textfont_size=8)
 
-# Building Figures
 
-medal_fig = px.bar(medals, x='Country', y='count', color='medal',
-                   color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
+#####################################
+# APPLICATION ARCHITECTURE AND HTML #
+#####################################
 
 # Start of the application
 
@@ -227,7 +231,7 @@ app.layout = html.Div(className='background', children=[
                                                         'Hockey', 'Boxing', 'Art Competitions']],
             value='Athletics',
             labelStyle={'display': 'inline-block'},
-            style={'fontSize': 20, 'textAlign': 'center'},
+            style={'fontSize': 20, 'textAlign': 'center', 'width': '90%'},
         ),
         html.Div([
             dcc.Graph(
@@ -241,8 +245,7 @@ app.layout = html.Div(className='background', children=[
             html.Div(children=['Type of sport : '], style={'display': 'inline-block', 'margin-right': '15px'}),
             dcc.Dropdown(options=[{'label': 'running', 'value': 'running'},
                                   {'label': 'athletics', 'value': 'athletics'},
-                                  {'label': 'swimming', 'value': 'swimming'},
-                                  {'label': 'skiing', 'value': 'skiing'}],
+                                  {'label': 'swimming', 'value': 'swimming'}],
                          value='running', id='sport_type',
                          style={'display': 'inline-block', 'width': '150px',
                                 'margin-right': '35px', 'verticalAlign': 'middle'}),
@@ -289,22 +292,28 @@ app.layout = html.Div(className='background', children=[
 ])
 
 
+##############################
+# INTERACTIONS AND CALLBACKS #
+##############################
+
 @app.callback(
     Output('medal_fig', 'figure'),
     [Input('graph_type', 'value')])
 def build_graph(graph_type):
+    # returns either the bar graph of the 20 greatest countries or only Europe or only America or only Africa
     if graph_type == 'world':
-        return medal_fig
-    if graph_type == 'europe_medals':
+        return px.bar(medals, x='Country', y='count', color='medal',
+                      color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
+    elif graph_type == 'europe_medals':
         return px.bar(europe_medals, x='Country', y='count', color='medal',
                       color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
-    if graph_type == 'america_medals':
+    elif graph_type == 'america_medals':
         return px.bar(america_medals, x='Country', y='count', color='medal',
                       color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
-    if graph_type == 'asia_medals':
+    elif graph_type == 'asia_medals':
         return px.bar(asia_medals, x='Country', y='count', color='medal',
                       color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
-    if graph_type == 'africa_medals':
+    elif graph_type == 'africa_medals':
         return px.bar(africa_medals, x='Country', y='count', color='medal',
                       color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
 
@@ -313,6 +322,7 @@ def build_graph(graph_type):
     Output('sport_fig', 'figure'),
     [Input('map_type', 'value')])
 def build_graph(value):
+    # return a choropleth map of medals won by country on a specific sport
     return gen_medals_by_sport(value)
 
 
@@ -321,6 +331,7 @@ def build_graph(value):
     [Input('year_slider', 'value')]  # (2)
 )
 def update_figure(input_value):
+    # return a choropleth map of medals won by country until a specific year
     return px.choropleth(world_medals_time[input_value], locations='Country',
                          color='Total number of medals',
                          hover_data=['Gold', 'Silver', 'Bronze'],
@@ -332,15 +343,25 @@ def update_figure(input_value):
               [Input('interval', 'n_intervals')]
               )
 def on_tick(n_intervals):
+    # make the slider scrolls the choropleth map
     if n_intervals is None:
         return 0
     return years[(n_intervals + 1) % len(years)]
+
+
+@app.callback(
+    Output('slider-output-container', 'children'),
+    Input('year_slider', 'value')
+)
+def update_output(value):
+    return 'Map of the year {}'.format(value)
 
 
 @app.callback(Output('interval', 'disabled'),
               Input('play', 'n_clicks'),
               Input('pause', 'n_clicks'))
 def play(play, pause):
+    # pause or play the slider
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
     if 'pause' in changed_id:
         return True
@@ -354,6 +375,7 @@ def play(play, pause):
     Input('sport_type', 'value')
 )
 def update_dropdown(value):
+    # update the sport dropdown
     if value == 'running':
         options = [{'label': sport, 'value': sport}
                    for sport in df_running_times['sport'].unique()]
@@ -366,11 +388,6 @@ def update_dropdown(value):
         options = [{'label': sport, 'value': sport}
                    for sport in df_athletics_results['sport'].unique()]
         return options, 'discus throw'
-    else:
-        options = [{'label': sport, 'value': sport}
-                   for sport in df_skiing_results['sport'].unique()]
-        return options, 'alpine combined'
-
 
 
 @app.callback(
@@ -380,6 +397,7 @@ def update_dropdown(value):
     Input('sport_type', 'value')
 )
 def update_figure(value, gender_choice, sport_type):
+    # return a performance histogram on a specific sport and gender
     performance_df = df_performance.query("sport == @value and gender == @gender_choice")
     if sport_type == 'running':
         performance_df = performance_df[(np.abs(stats.zscore(performance_df['Performance'])) < 3)]
@@ -398,26 +416,14 @@ def update_figure(value, gender_choice, sport_type):
     Input('sport_type', 'value')
 )
 def update_figure(value, gender_choice, sport_type):
+    # return a performance histogram on a specific sport and gender
     performance_df = df_performance.query("sport == @value and gender == @gender_choice")
     if sport_type == 'running':
-        performance_df = performance_df[(np.abs(stats.zscore(performance_df['Performance'])) < 3)]
+        performance_df = performance_df[(np.abs(stats.zscore(performance_df['Performance'])) < 3)]  # remove outliers
     fig_hist_performance = px.histogram(performance_df, x="Performance")
     fig_hist_performance.update_layout(barmode='overlay').update_traces(opacity=0.6)
     return fig_hist_performance
 
 
-@app.callback(
-    Output('slider-output-container', 'children'),
-    Input('year_slider', 'value')
-)
-def update_output(value):
-    return 'Map of the year {}'.format(value)
-
-
 if __name__ == '__main__':
     app.run_server(debug=True)
-
-# TO DO LIST :
-# map evolutive : retravailler l'axe des couleurs
-# peut etre indiquer le pays qui organise
-# generaliser ce dernier graph avec plus de domain et de sport

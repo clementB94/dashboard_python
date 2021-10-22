@@ -116,20 +116,17 @@ sportsSwimming = ['100m-backstroke-men', '100m-backstroke-women', '100m-breastst
                   '200m-freestyle-women', '200m-individual-medley-men', '200m-individual-medley-women',
                   '400m-freestyle-men', '400m-freestyle-women', '50m-freestyle-men', '50m-freestyle-women']
 
-sportsSkiing = ['alpine-combined-men', 'alpine-combined-women', 'downhill-men', 'downhill-women', 'giant-slalom-men',
-                'giant-slalom-women', 'slalom-men', 'slalom-women', 'super-g-men', 'super-g-women']
-
 fields = ["gender", "sport", "location", "year", "rank", "name", "country", "results"]
 
-running = Sports('athletics', sportsRunning, 'running_times.csv', time=True)
+running = Sports('athletics', sportsRunning, 'running_results.csv', time=True)
 athletics = Sports('athletics', sportsAthletics, 'athletics_results.csv')
 swimming = Sports('swimming', sportsSwimming, 'swimming_results.csv', time=True)
-skiing = Sports('alpine-skiing', sportsSkiing, 'skiing_results.csv', time=True)
 
 # Changer pour selectionner :
-sportsSelected = skiing
+sportsSelected = swimming
 
 parser = MyHTMLParser(sportsSelected.time)
+
 for game in winterGames:
     for sport in sportsSelected.sports:
         try:
