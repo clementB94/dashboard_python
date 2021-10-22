@@ -65,8 +65,8 @@ These maps shows that the U.S are strong on almost every sport, it also shows th
 | ![image](https://user-images.githubusercontent.com/81488993/138512153-0945ff6c-2a62-4ae2-ac7f-04772facb028.png) | ![image](https://user-images.githubusercontent.com/81488993/138512195-ab0f2219-8724-4a1d-b679-8ba34e16afdf.png) |
 | ![image](https://user-images.githubusercontent.com/81488993/138511714-02ce0cce-8843-4f36-9f4a-5e0ec0053140.png) | ![image](https://user-images.githubusercontent.com/81488993/138511782-b06676ea-ed48-40ab-8a65-ab139dfec0cb.png) |
 
-What come to the eye directly is that overall athletes perform better and better in addition the slope of the curve is less and less strong, so maybe we can expect that worlds record become rarers and that athletes reach a point where the human body can't go further.
-The Histograms highlight that 'good' perfomrances are common because most of the results are near the record but doing a truly great performance is very rare.  
+What come to the eye directly is that overall athletes perform better and better in addition the slope of the curve is less and less strong, so maybe we can expect that worlds record become rarers and that athletes reach a point where the human body can't go further. 
+The Histograms highlight that 'good' perfomrances are common because most of the results are not so far from the record but doing a truly great performance is very rare, combined with the fact that boxes in the boxplots are getting smaller and smaller we can conclude that the athletes performances are increasingly close and high.  
 
 
 
