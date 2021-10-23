@@ -14,7 +14,7 @@ The Dashboard is built with Python3 and Dash, graphs are powered by Plotly.
 
 Once You have installed Dash you need download the code and execute the olympic games dashboard python file.
 The Python's depencies required for the compilation are :  Dash, Pandas, Plotly, Numpy and Scipy.
-When the code is executed a Localhost link appears, you need to clikc on it, it will show the Dashboard on a website.
+When the code is executed a Localhost link appears, you need to clikc on it, it will show the Dashboard on a website. (you might wait a bit because there is a lot of datas and graphs to browse)
 ![image](https://user-images.githubusercontent.com/81488993/137878172-b2130bc2-6b4e-4ebb-a849-cc70e5e95957.png)
 
 
@@ -66,7 +66,13 @@ These maps shows that the U.S are strong on almost every sport, it also shows th
 | ![image](https://user-images.githubusercontent.com/81488993/138511714-02ce0cce-8843-4f36-9f4a-5e0ec0053140.png) | ![image](https://user-images.githubusercontent.com/81488993/138511782-b06676ea-ed48-40ab-8a65-ab139dfec0cb.png) |
 
 What come to the eye directly is that overall athletes perform better and better in addition the slope of the curve is less and less strong, so maybe we can expect that worlds record become rarers and that athletes reach a point where the human body can't go further. 
-The Histograms highlight that 'good' perfomrances are common because most of the results are not so far from the record but doing a truly great performance is very rare, combined with the fact that boxes in the boxplots are getting smaller and smaller we can conclude that the athletes performances are increasingly close and high.  
+The Histograms highlight that 'good' performances are common because most of the results are not so far from the record but doing a truly great performance is very rare, combined with the fact that boxes in the boxplots are getting smaller and smaller we can conclude that the athletes performances are increasingly close and high.  
+
+## Weight/Height by sport (summer editions)
+
+![image](https://user-images.githubusercontent.com/81488993/138570349-8a62af0b-4d7c-4854-9677-5981abd3b137.png)
+
+Here we have the height and weight displayed by sport and gender and there are clear differences by sport. in the men's scatter we have almost every sport with different dimensions and in both we see gymnastics need small height and height while basketball volleyball and handball need large height and weight.
 
 
 
