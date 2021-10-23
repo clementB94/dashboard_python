@@ -195,7 +195,6 @@ sport_wise_df['Total_number_of_medals'] = sport_wise_df['Bronze'] + sport_wise_d
 sport_wise_df = sport_wise_df.sort_values(by='Total_number_of_medals', ascending=False)
 sport_iter = df1['Sport'].value_counts().rename_axis('Sport').reset_index(name='counts')
 sport_wise_df = pd.merge(left=sport_wise_df, right=sport_iter, left_on='Sport', right_on='Sport')
-print(sport_wise_df)
 
 
 # creating sports and player wise figures
