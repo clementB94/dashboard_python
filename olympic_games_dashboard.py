@@ -193,23 +193,29 @@ sport_wise_df = sport_wise_df.fillna(0)
 sport_wise_df.reset_index(inplace=True)
 sport_wise_df['Total_number_of_medals'] = sport_wise_df['Bronze'] + sport_wise_df['Gold'] + sport_wise_df['Silver']
 sport_wise_df = sport_wise_df.sort_values(by='Total_number_of_medals', ascending=False)
+sport_iter = df1['Sport'].value_counts().rename_axis('Sport').reset_index(name='counts')
+sport_wise_df = pd.merge(left=sport_wise_df, right=sport_iter, left_on='Sport', right_on='Sport')
+print(sport_wise_df)
+
 
 # creating sports and player wise figures
 
-fig_sportwise = go.Figure(data=[go.Table(columnwidth=[165, 90, 90, 90, 320],
-                                         header=dict(values=sport_wise_df.columns),
-                                         cells=dict(values=[sport_wise_df.Sport, sport_wise_df.Gold,
-                                                            sport_wise_df.Silver, sport_wise_df.Bronze,
-                                                            sport_wise_df.Total_number_of_medals]))
-                                ], layout=layout)
-fig_playerwise = go.Figure(data=[go.Table(columnwidth=[180, 90, 90, 90, 320],
-                                          header=dict(values=player_wise_df.columns[:5]),
-                                          cells=dict(values=[player_wise_df.Player + ', ' + player_wise_df.Team,
-                                                             player_wise_df.Gold, player_wise_df.Silver,
-                                                             player_wise_df.Bronze,
-                                                             player_wise_df.Total_number_of_medals],
-                                                     align='center'))
+fig_sport_wise = go.Figure(data=[go.Table(columnwidth=[200, 90, 90, 90, 250],
+                                          header=dict(values=sport_wise_df.columns[:5]),
+                                          cells=dict(values=[sport_wise_df.Sport + ', ' +
+                                                             sport_wise_df.counts.astype(str) + ' times',
+                                                             sport_wise_df.Gold, sport_wise_df.Silver,
+                                                             sport_wise_df.Bronze,
+                                                             sport_wise_df.Total_number_of_medals]))
                                  ], layout=layout)
+fig_player_wise = go.Figure(data=[go.Table(columnwidth=[180, 90, 90, 90, 250],
+                                           header=dict(values=player_wise_df.columns[:5]),
+                                           cells=dict(values=[player_wise_df.Player + ', ' + player_wise_df.Team,
+                                                              player_wise_df.Gold, player_wise_df.Silver,
+                                                              player_wise_df.Bronze,
+                                                              player_wise_df.Total_number_of_medals],
+                                                      align='center'))
+                                  ], layout=layout)
 
 # Weight/Height by sport dataframe and figure
 
@@ -322,8 +328,8 @@ app.layout = html.Div(className='background', children=[
     html.Div(children=[
         html.H1(children='Sports and players wise medal Count', style={'textAlign': 'center'}),
         html.Div(children=[
-            dcc.Graph(figure=fig_sportwise, style={'display': 'inline-block', 'width': '50%'}),
-            dcc.Graph(figure=fig_playerwise, style={'display': 'inline-block', 'width': '50%'}),
+            dcc.Graph(figure=fig_sport_wise, style={'display': 'inline-block', 'width': '50%'}),
+            dcc.Graph(figure=fig_player_wise, style={'display': 'inline-block', 'width': '50%'}),
         ]),
     ], className='container'),
     html.Div(children=[
