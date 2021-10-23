@@ -11,7 +11,6 @@ from scipy import stats
 
 pd.options.mode.chained_assignment = None
 
-
 ################################################
 # DATA IMPORTATION,PREPARATION AND AGGREGATION #
 ################################################
@@ -55,6 +54,10 @@ america = ['USA', 'ARG', 'BRA', 'CAN', 'CHI', 'COL', 'CRC', 'CUB', 'DOM', 'HAI',
 asia = ['IRI', 'IRQ', 'QAT', 'KSA', 'UAE', 'KAZ', 'IND', 'NEP', 'PAK', 'SRI', 'TPE', 'CHN', 'HKG', 'JPN', 'PRK', 'KOR',
         'MGL', 'CAM', 'INA', 'MAS', 'MYA', 'PHI', 'SGP', 'THA', 'VIE', 'ISR']
 
+# graph object layout
+
+layout = go.Layout(margin=go.layout.Margin(l=15, r=15, t=25, b=15))
+
 # creating dataframe of golden medals by country (only the first 20)
 
 gold = df1[['NOC', 'Medal']]
@@ -75,6 +78,10 @@ europe_medals = medals[medals['Country'].isin(europe)]
 america_medals = medals[medals['Country'].isin(america)]
 asia_medals = medals[medals['Country'].isin(asia)]
 medals = medals[medals['Country'].isin(gold['Country'])]
+
+# Convert NOC into countries names
+
+medals['Country'].replace(country_name_table, inplace=True)
 
 # creating dataframe of all medals by country for time series map
 
@@ -164,20 +171,56 @@ gpd_df = pd.merge(left=gpd_df, right=df5, left_on='Country', right_on='Country')
 gpd_df = gpd_df.rename(columns={'Year_2016': 'Population 2016'})
 gpd_df['Log Population'] = np.log(gpd_df['Population 2016'])
 
-# Convert NOC into countries names
+# dataframe of sports and player wise medal count
 
-medals['Country'].replace(country_name_table, inplace=True)
+player_wise_df = df1[['Name', 'Medal']].dropna().value_counts()
+player_wise_df = pd.DataFrame({'Player': player_wise_df.index.get_level_values(0),
+                               'medal': player_wise_df.index.get_level_values(1), 'count': player_wise_df.values})
+player_wise_df = player_wise_df.pivot(index='Player', columns='medal', values='count')
+player_wise_df = player_wise_df.fillna(0)
+player_wise_df.reset_index(inplace=True)
+player_wise_df['Total_number_of_medals'] = player_wise_df['Bronze'] + player_wise_df['Gold'] + player_wise_df['Silver']
+player_wise_df = player_wise_df.sort_values(by='Total_number_of_medals', ascending=False)
+nation_of_player = df1[['Name', 'Team']].groupby('Name').first().reset_index()
+player_wise_df = pd.merge(left=player_wise_df, right=nation_of_player, left_on='Player', right_on='Name')
 
-# Weight/Height by sport
+sport_wise_df = df1[['Sport', 'Medal']].dropna().value_counts()
+sport_wise_df = pd.DataFrame({'Sport': sport_wise_df.index.get_level_values(0),
+                              'medal': sport_wise_df.index.get_level_values(1), 'count': sport_wise_df.values})
+sport_wise_df['count'] = sport_wise_df['count'].astype(int)
+sport_wise_df = sport_wise_df.pivot(index='Sport', columns='medal', values='count')
+sport_wise_df = sport_wise_df.fillna(0)
+sport_wise_df.reset_index(inplace=True)
+sport_wise_df['Total_number_of_medals'] = sport_wise_df['Bronze'] + sport_wise_df['Gold'] + sport_wise_df['Silver']
+sport_wise_df = sport_wise_df.sort_values(by='Total_number_of_medals', ascending=False)
+
+# creating sports and player wise figures
+
+fig_sportwise = go.Figure(data=[go.Table(columnwidth=[165, 90, 90, 90, 320],
+                                         header=dict(values=sport_wise_df.columns),
+                                         cells=dict(values=[sport_wise_df.Sport, sport_wise_df.Gold,
+                                                            sport_wise_df.Silver, sport_wise_df.Bronze,
+                                                            sport_wise_df.Total_number_of_medals]))
+                                ], layout=layout)
+fig_playerwise = go.Figure(data=[go.Table(columnwidth=[180, 90, 90, 90, 320],
+                                          header=dict(values=player_wise_df.columns[:5]),
+                                          cells=dict(values=[player_wise_df.Player + ', ' + player_wise_df.Team,
+                                                             player_wise_df.Gold, player_wise_df.Silver,
+                                                             player_wise_df.Bronze,
+                                                             player_wise_df.Total_number_of_medals],
+                                                     align='center'))
+                                 ], layout=layout)
+
+# Weight/Height by sport dataframe and figure
 
 grouped_df = df1[df1["Season"] == "Summer"][["Sex", "Sport", "Weight", "Height", "Age"]]
 grouped_df = grouped_df.groupby(["Sex", "Sport"])
 mean_df = grouped_df.mean().round(2).reset_index()
-fig_weight_height = px.scatter(mean_df, x="Weight", y="Height", color="Sport", text="Sport", facet_col="Sex")
+fig_weight_height = px.scatter(mean_df, x="Weight", y="Height", color="Sport", text="Sport", facet_col="Sex",
+                               hover_data=["Age"])
 fig_weight_height.layout.yaxis2.update(matches=None)
 fig_weight_height.layout.xaxis2.update(matches=None)
 fig_weight_height.update_traces(textposition='middle right', textfont_size=8)
-
 
 #####################################
 # APPLICATION ARCHITECTURE AND HTML #
@@ -228,10 +271,10 @@ app.layout = html.Div(className='background', children=[
                                                         'Wrestling', 'Shooting', 'Canoeing', 'Skating', 'Fencing',
                                                         'Archery', 'Rowing', 'Football', 'Volleyball', 'Diving',
                                                         'Equestrianism', 'Sailing', 'Weightlifting', 'Basketball',
-                                                        'Hockey', 'Boxing', 'Art Competitions']],
+                                                        'Hockey', 'Boxing', 'Art Competitions', 'Judo', 'Tennis']],
             value='Athletics',
             labelStyle={'display': 'inline-block'},
-            style={'fontSize': 20, 'textAlign': 'center', 'width': '90%'},
+            style={'fontSize': 20, 'textAlign': 'center', 'width': '95%'},
         ),
         html.Div([
             dcc.Graph(
@@ -275,6 +318,13 @@ app.layout = html.Div(className='background', children=[
         html.Div([
             dcc.Graph(figure=fig_weight_height),
         ])
+    ], className='container'),
+    html.Div(children=[
+        html.H1(children='Sports and players wise medal Count', style={'textAlign': 'center'}),
+        html.Div(children=[
+            dcc.Graph(figure=fig_sportwise, style={'display': 'inline-block', 'width': '50%'}),
+            dcc.Graph(figure=fig_playerwise, style={'display': 'inline-block', 'width': '50%'}),
+        ]),
     ], className='container'),
     html.Div(children=[
         html.H1(children='Medal count by GDP and Population', style={'textAlign': 'center'}),

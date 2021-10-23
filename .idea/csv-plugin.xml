@@ -17,27 +17,6 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="\population-figures-by-country-csv_csv.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\running_times.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\skiing_results.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="\swimming_results.csv">
           <value>
             <Attribute>
