@@ -221,6 +221,7 @@ fig_player_wise = go.Figure(data=[go.Table(columnwidth=[180, 90, 90, 90, 250],
 grouped_df = df1[df1["Season"] == "Summer"][["Sex", "Sport", "Weight", "Height", "Age"]]
 grouped_df = grouped_df.groupby(["Sex", "Sport"])
 mean_df = grouped_df.mean().round(2).reset_index()
+mean_df['Sex'] = mean_df['Sex'].replace('F', 'W')
 fig_weight_height = px.scatter(mean_df, x="Weight", y="Height", color="Sport", text="Sport", facet_col="Sex",
                                hover_data=["Age"])
 fig_weight_height.layout.yaxis2.update(matches=None)
