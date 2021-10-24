@@ -74,6 +74,12 @@ The Histograms highlight that 'good' performances are common because most of the
 
 Here we have the height and weight displayed by sport and gender and there are clear differences by sport. in the men's scatter we have almost every sport with different dimensions and in both we see gymnastics need small height and height while basketball volleyball and handball need large height and weight.
 
+## Sports and players wise medal Count
+
+![image](https://user-images.githubusercontent.com/81488993/138592823-d6376df8-937d-4d60-8ea1-f57d9e591ae3.png)
+
+these tables summarizes who won the most medals and which sport give the most medals, we can see that sport that most people will think about when thinking about olympics games are indeed the most represented. The second table shows that micheal phelps is a legend of the olympics and that he has a very impressive number of gold medals compared to the others, we also see that a lot of athletes played for the Soviet Union which demonstrate their power at the time. Nevertheless there is a majority of American athletes in this list.
+ 
 
 
 
