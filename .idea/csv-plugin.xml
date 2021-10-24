@@ -17,6 +17,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\running_results.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\swimming_results.csv">
           <value>
             <Attribute>

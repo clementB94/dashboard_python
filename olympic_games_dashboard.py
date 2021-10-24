@@ -18,10 +18,10 @@ pd.options.mode.chained_assignment = None
 # importing the main dataset
 
 df1 = pd.read_csv('athlete_events.csv')
-# some team event count for multiples medals while in reality it counts for only one
-df1 = df1.drop_duplicates(subset=['Team', 'Games', 'Year', 'City', 'Sport', 'Event', 'Medal'])
 
-df_running_times = pd.read_csv('running_results.csv')
+# some team event count for multiples medals while in reality it counts for only one
+
+df1 = df1.drop_duplicates(subset=['Team', 'NOC', 'Games', 'Season', 'Year', 'City', 'Sport', 'Event', 'Medal'])
 
 # conversion tables
 
@@ -173,7 +173,9 @@ gpd_df['Log Population'] = np.log(gpd_df['Population 2016'])
 
 # dataframe of sports and player wise medal count
 
-player_wise_df = df1[['Name', 'Medal']].dropna().value_counts()
+df_wise = pd.read_csv('athlete_events.csv')  # we don't need to remove duplicates
+
+player_wise_df = df_wise[['Name', 'Medal']].dropna().value_counts()
 player_wise_df = pd.DataFrame({'Player': player_wise_df.index.get_level_values(0),
                                'medal': player_wise_df.index.get_level_values(1), 'count': player_wise_df.values})
 player_wise_df = player_wise_df.pivot(index='Player', columns='medal', values='count')
@@ -196,11 +198,11 @@ sport_wise_df = sport_wise_df.sort_values(by='Total_number_of_medals', ascending
 sport_iter = df1['Sport'].value_counts().rename_axis('Sport').reset_index(name='counts')
 sport_wise_df = pd.merge(left=sport_wise_df, right=sport_iter, left_on='Sport', right_on='Sport')
 
-
 # creating sports and player wise figures
 
 fig_sport_wise = go.Figure(data=[go.Table(columnwidth=[200, 90, 90, 90, 250],
-                                          header=dict(values=sport_wise_df.columns[:5]),
+                                          header=dict(values=['Player', 'Gold', 'Silver', 'Bronze',
+                                                              'Total number of medals']),
                                           cells=dict(values=[sport_wise_df.Sport + ', ' +
                                                              sport_wise_df.counts.astype(str) + ' times',
                                                              sport_wise_df.Gold, sport_wise_df.Silver,
@@ -208,7 +210,8 @@ fig_sport_wise = go.Figure(data=[go.Table(columnwidth=[200, 90, 90, 90, 250],
                                                              sport_wise_df.Total_number_of_medals]))
                                  ], layout=layout)
 fig_player_wise = go.Figure(data=[go.Table(columnwidth=[180, 90, 90, 90, 250],
-                                           header=dict(values=player_wise_df.columns[:5]),
+                                           header=dict(values=['Player', 'Gold', 'Silver', 'Bronze',
+                                                               'Total number of medals']),
                                            cells=dict(values=[player_wise_df.Player + ', ' + player_wise_df.Team,
                                                               player_wise_df.Gold, player_wise_df.Silver,
                                                               player_wise_df.Bronze,
