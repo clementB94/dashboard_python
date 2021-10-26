@@ -26,7 +26,7 @@ df_athlete_events = pd.read_csv('athlete_events.csv')
 
 # some team event count for multiples medals while in reality it counts for only one
 
-df_athlete_events = df_athlete_events.drop_duplicates(subset=['Team', 'NOC', 'Games', 'Season', 'Year', 'City', 'Sport', 'Event', 'Medal'])
+df_athlete_events_unique = df_athlete_events.drop_duplicates(subset=['Team', 'NOC', 'Games', 'Season', 'Year', 'City', 'Sport', 'Event', 'Medal'])
 
 # conversion tables
 
@@ -65,7 +65,7 @@ layout = go.Layout(margin=go.layout.Margin(l=15, r=15, t=25, b=15))
 
 # creating dataframe of golden medals by country (only the first 20)
 
-gold = df_athlete_events[['NOC', 'Medal']]
+gold = df_athlete_events_unique[['NOC', 'Medal']]
 gold = gold[gold['Medal'] == 'Gold']
 gold = gold.NOC.value_counts()
 gold = gold[:20]
@@ -73,7 +73,7 @@ gold = pd.DataFrame({'Country': gold.index, 'Number of golden medals': gold.valu
 
 # creating dataframe of all medals by country (only the first 20)
 
-medals = df_athlete_events[['NOC', 'Medal']].dropna()
+medals = df_athlete_events_unique[['NOC', 'Medal']].dropna()
 medals = medals.value_counts()
 
 medals = pd.DataFrame({'Country': medals.index.get_level_values(0),
@@ -90,8 +90,8 @@ medals['Country'].replace(country_name_table, inplace=True)
 
 # creating dataframe of all medals by country for time series map
 
-years = sorted(df_athlete_events['Year'].unique())
-world_medals_time = {year: df_athlete_events.query("Year <= @year") for year in years}
+years = sorted(df_athlete_events_unique['Year'].unique())
+world_medals_time = {year: df_athlete_events_unique.query("Year <= @year") for year in years}
 
 for year in world_medals_time.keys():
     world_medals_time[year] = world_medals_time[year][['NOC', 'Medal']].value_counts()
@@ -122,7 +122,7 @@ def gen_medals_by_sport(sport):
         Returns:
             a choropleth map figure
     """
-    df_medals = df_athlete_events[['NOC', 'Medal']].loc[df_athlete_events['Sport'].str.contains(sport)].dropna().value_counts()
+    df_medals = df_athlete_events_unique[['NOC', 'Medal']].loc[df_athlete_events_unique['Sport'].str.contains(sport)].dropna().value_counts()
     df_medals = pd.DataFrame({'Country': df_medals.index.get_level_values(0),
                               'medal': df_medals.index.get_level_values(1), 'count': df_medals.values})
     df_medals = df_medals.pivot(index='Country', columns='medal', values='count')
@@ -156,7 +156,7 @@ df_performance = df_athletics_results.append(df_running_times).append(df_swimmin
 
 # generate dataframe for medal per gpd and medals per population
 
-gpd_df = df_athlete_events[['Team', 'Medal']].value_counts()
+gpd_df = df_athlete_events_unique[['Team', 'Medal']].value_counts()
 gpd_df = pd.DataFrame({'Country': gpd_df.index.get_level_values(0),
                        'medal': gpd_df.index.get_level_values(1), 'count': gpd_df.values})
 gpd_df = gpd_df.pivot(index='Country', columns='medal', values='count')
@@ -164,77 +164,118 @@ gpd_df.fillna(0, inplace=True)
 gpd_df.reset_index(inplace=True)
 gpd_df['Total number of medals'] = gpd_df['Gold'] + gpd_df['Silver'] + gpd_df['Bronze']
 
-df4 = pd.read_csv('GDP.csv')
-df4 = df4[['Country Name', '2020']]
-gpd_df = pd.merge(left=gpd_df, right=df4, left_on='Country', right_on='Country Name')
+df_GDP = pd.read_csv('GDP.csv')
+df_GDP = df_GDP[['Country Name', '2020']]
+gpd_df = pd.merge(left=gpd_df, right=df_GDP, left_on='Country', right_on='Country Name')
 gpd_df = gpd_df.rename(columns={'2020': 'GDP 2020'})
 gpd_df['Log GDP'] = np.log(gpd_df['GDP 2020'])
 
-df5 = pd.read_csv('Population.csv')
-df5 = df5[['Country', 'Year_2016']]
-gpd_df = pd.merge(left=gpd_df, right=df5, left_on='Country', right_on='Country')
+df_population = pd.read_csv('Population.csv')
+df_population = df_population[['Country', 'Year_2016']]
+gpd_df = pd.merge(left=gpd_df, right=df_population, left_on='Country', right_on='Country')
 gpd_df = gpd_df.rename(columns={'Year_2016': 'Population 2016'})
 gpd_df['Log Population'] = np.log(gpd_df['Population 2016'])
 
 # dataframe of sports and player wise medal count
 
-df_wise = pd.read_csv('athlete_events.csv')  # we don't need to remove duplicates
+# df_wise = pd.read_csv('athlete_events.csv')  # we don't need to remove duplicates
 
-player_wise_df = df_wise[['Name', 'Medal']].dropna().value_counts()
-player_wise_df = pd.DataFrame({'Player': player_wise_df.index.get_level_values(0),
-                               'medal': player_wise_df.index.get_level_values(1), 'count': player_wise_df.values})
-player_wise_df = player_wise_df.pivot(index='Player', columns='medal', values='count')
-player_wise_df = player_wise_df.fillna(0)
-player_wise_df.reset_index(inplace=True)
-player_wise_df['Total_number_of_medals'] = player_wise_df['Bronze'] + player_wise_df['Gold'] + player_wise_df['Silver']
-player_wise_df = player_wise_df.sort_values(by='Total_number_of_medals', ascending=False)
-nation_of_player = df_athlete_events[['Name', 'Team']].groupby('Name').first().reset_index()
-player_wise_df = pd.merge(left=player_wise_df, right=nation_of_player, left_on='Player', right_on='Name')
 
-sport_wise_df = df_athlete_events[['Sport', 'Medal']].dropna().value_counts()
-sport_wise_df = pd.DataFrame({'Sport': sport_wise_df.index.get_level_values(0),
-                              'medal': sport_wise_df.index.get_level_values(1), 'count': sport_wise_df.values})
-sport_wise_df['count'] = sport_wise_df['count'].astype(int)
-sport_wise_df = sport_wise_df.pivot(index='Sport', columns='medal', values='count')
-sport_wise_df = sport_wise_df.fillna(0)
-sport_wise_df.reset_index(inplace=True)
-sport_wise_df['Total_number_of_medals'] = sport_wise_df['Bronze'] + sport_wise_df['Gold'] + sport_wise_df['Silver']
-sport_wise_df = sport_wise_df.sort_values(by='Total_number_of_medals', ascending=False)
-sport_iter = df_athlete_events['Sport'].value_counts().rename_axis('Sport').reset_index(name='counts')
-sport_wise_df = pd.merge(left=sport_wise_df, right=sport_iter, left_on='Sport', right_on='Sport')
+
+
 
 # creating sports and player wise figures
+def gen_fig_count(df, count_by, column_width):
+    count_df = df[[count_by, 'Medal']].dropna().value_counts()
+    count_df = pd.DataFrame({'Name': count_df.index.get_level_values(0),
+                                'medal': count_df.index.get_level_values(1), 'count': count_df.values})
+    count_df = count_df.pivot(index='Name', columns='medal', values='count')
+    count_df = count_df.fillna(0).astype(int)
+    count_df.reset_index(inplace=True)
+    count_df['Total_number_of_medals'] = count_df['Bronze'] + count_df['Gold'] + count_df['Silver']
+    count_df = count_df.sort_values(by='Total_number_of_medals', ascending=False)
+    if count_by == 'Sport' :
+        merge = df['Sport'].value_counts().rename_axis('Sport').reset_index(name='counts')
+        count_df = pd.merge(left=count_df, right=merge, left_on='Name', right_on='Sport')
+        return go.Figure(data=[go.Table(columnwidth=column_width,
+                    header=dict(values=['Sport', 'Gold', 'Silver', 'Bronze',
+                                        'Total number of medals']),
+                    cells=dict(values=[count_df.Name + ', ' +
+                                        count_df.counts.astype(str) + ' times',
+                                        count_df.Gold, count_df.Silver,
+                                        count_df.Bronze,
+                                        count_df.Total_number_of_medals]))
+                    ], layout=layout)
+    elif count_by == 'Name' :
+        merge = df[['Name', 'Team']].groupby('Name').first().reset_index()
+        count_df = pd.merge(left=count_df, right=merge, left_on='Name', right_on='Name')
+        return go.Figure(data=[go.Table(columnwidth=[180, 90, 90, 90, 250],
+                    header=dict(values=['Player', 'Gold', 'Silver', 'Bronze',
+                                        'Total number of medals']),
+                    cells=dict(values=[count_df.Name + ', ' + count_df.Team,
+                                        count_df.Gold, count_df.Silver,
+                                        count_df.Bronze,
+                                        count_df.Total_number_of_medals],
+                                align='center'))
+                    ], layout=layout)
+    return
+    
+# def gen_fig_sport_wise():
+#     sport_wise_df = df_athlete_events_unique[['Sport', 'Medal']].dropna().value_counts()
+#     sport_wise_df = pd.DataFrame({'Sport': sport_wise_df.index.get_level_values(0),
+#                                 'medal': sport_wise_df.index.get_level_values(1), 'count': sport_wise_df.values})
+#     sport_wise_df['count'] = sport_wise_df['count'].astype(int)
+#     sport_wise_df = sport_wise_df.pivot(index='Sport', columns='medal', values='count')
+#     sport_wise_df = sport_wise_df.fillna(0)
+#     sport_wise_df.reset_index(inplace=True)
+#     sport_wise_df['Total_number_of_medals'] = sport_wise_df['Bronze'] + sport_wise_df['Gold'] + sport_wise_df['Silver']
+#     sport_wise_df = sport_wise_df.sort_values(by='Total_number_of_medals', ascending=False)
+#     sport_iter = df_athlete_events_unique['Sport'].value_counts().rename_axis('Sport').reset_index(name='counts')
+#     sport_wise_df = pd.merge(left=sport_wise_df, right=sport_iter, left_on='Sport', right_on='Sport')
+#     return go.Figure(data=[go.Table(columnwidth=[200, 90, 90, 90, 250],
+#                     header=dict(values=['Player', 'Gold', 'Silver', 'Bronze',
+#                                         'Total number of medals']),
+#                     cells=dict(values=[sport_wise_df.Sport + ', ' +
+#                                         sport_wise_df.counts.astype(str) + ' times',
+#                                         sport_wise_df.Gold, sport_wise_df.Silver,
+#                                         sport_wise_df.Bronze,
+#                                         sport_wise_df.Total_number_of_medals]))
+#                     ], layout=layout)
 
-fig_sport_wise = go.Figure(data=[go.Table(columnwidth=[200, 90, 90, 90, 250],
-                                          header=dict(values=['Player', 'Gold', 'Silver', 'Bronze',
-                                                              'Total number of medals']),
-                                          cells=dict(values=[sport_wise_df.Sport + ', ' +
-                                                             sport_wise_df.counts.astype(str) + ' times',
-                                                             sport_wise_df.Gold, sport_wise_df.Silver,
-                                                             sport_wise_df.Bronze,
-                                                             sport_wise_df.Total_number_of_medals]))
-                                 ], layout=layout)
-fig_player_wise = go.Figure(data=[go.Table(columnwidth=[180, 90, 90, 90, 250],
-                                           header=dict(values=['Player', 'Gold', 'Silver', 'Bronze',
-                                                               'Total number of medals']),
-                                           cells=dict(values=[player_wise_df.Player + ', ' + player_wise_df.Team,
-                                                              player_wise_df.Gold, player_wise_df.Silver,
-                                                              player_wise_df.Bronze,
-                                                              player_wise_df.Total_number_of_medals],
-                                                      align='center'))
-                                  ], layout=layout)
+# def gen_fig_player_wise():
+#     player_wise_df = df_athlete_events[['Name', 'Medal']].dropna().value_counts()
+#     player_wise_df = pd.DataFrame({'Player': player_wise_df.index.get_level_values(0),
+#                                 'medal': player_wise_df.index.get_level_values(1), 'count': player_wise_df.values})
+#     player_wise_df = player_wise_df.pivot(index='Player', columns='medal', values='count')
+#     player_wise_df = player_wise_df.fillna(0)
+#     player_wise_df.reset_index(inplace=True)
+#     player_wise_df['Total_number_of_medals'] = player_wise_df['Bronze'] + player_wise_df['Gold'] + player_wise_df['Silver']
+#     player_wise_df = player_wise_df.sort_values(by='Total_number_of_medals', ascending=False)
+#     nation_of_player = df_athlete_events_unique[['Name', 'Team']].groupby('Name').first().reset_index()
+#     player_wise_df = pd.merge(left=player_wise_df, right=nation_of_player, left_on='Player', right_on='Name')
+#     return go.Figure(data=[go.Table(columnwidth=[180, 90, 90, 90, 250],
+#                     header=dict(values=['Player', 'Gold', 'Silver', 'Bronze',
+#                                         'Total number of medals']),
+#                     cells=dict(values=[player_wise_df.Player + ', ' + player_wise_df.Team,
+#                                         player_wise_df.Gold, player_wise_df.Silver,
+#                                         player_wise_df.Bronze,
+#                                         player_wise_df.Total_number_of_medals],
+#                                 align='center'))
+#                     ], layout=layout)
 
 # Weight/Height by sport dataframe and figure
+def gen_fig_weight_height():
+    grouped_df = df_athlete_events_unique[df_athlete_events_unique["Season"] == "Summer"][["Sex", "Sport", "Weight", "Height", "Age"]]
+    grouped_df = grouped_df.groupby(["Sex", "Sport"])
+    mean_df = grouped_df.mean().round(2).reset_index()
+    mean_df['Sex'] = mean_df['Sex'].replace('F', 'W')
+    fig_weight_height = px.scatter(mean_df, x="Weight", y="Height", color="Sport", text="Sport", 
+                                    facet_col="Sex", hover_data=["Age"])
+    fig_weight_height.layout.yaxis2.update(matches=None)
+    fig_weight_height.layout.xaxis2.update(matches=None)
+    fig_weight_height.update_traces(textposition='middle right', textfont_size=8)
+    return fig_weight_height
 
-grouped_df = df_athlete_events[df_athlete_events["Season"] == "Summer"][["Sex", "Sport", "Weight", "Height", "Age"]]
-grouped_df = grouped_df.groupby(["Sex", "Sport"])
-mean_df = grouped_df.mean().round(2).reset_index()
-mean_df['Sex'] = mean_df['Sex'].replace('F', 'W')
-fig_weight_height = px.scatter(mean_df, x="Weight", y="Height", color="Sport", text="Sport", 
-                                facet_col="Sex", hover_data=["Age"])
-fig_weight_height.layout.yaxis2.update(matches=None)
-fig_weight_height.layout.xaxis2.update(matches=None)
-fig_weight_height.update_traces(textposition='middle right', textfont_size=8)
 
 #####################################
 # APPLICATION ARCHITECTURE AND HTML #
@@ -242,8 +283,9 @@ fig_weight_height.update_traces(textposition='middle right', textfont_size=8)
 
 # Start of the application
 
-app = dash.Dash(__name__)
+# app = get_app(year_slider, gpd_df, fig_sport_wise, fig_player_wise) #TODO : Passer moins d'arguments 
 
+app = dash.Dash(__name__)
 app.layout = html.Div(className='background', children=[
     html.Div([
         html.H1(children='Olympic Games Dashboard', style={'textAlign': 'center', 'font-size': '48px'}),
@@ -301,20 +343,23 @@ app.layout = html.Div(className='background', children=[
         html.Div([
             html.Div(children=['Type of sport : '], style={'display': 'inline-block', 'margin-right': '15px'}),
             dcc.Dropdown(options=[{'label': 'running', 'value': 'running'},
-                                  {'label': 'athletics', 'value': 'athletics'},
-                                  {'label': 'swimming', 'value': 'swimming'}],
-                         value='running', id='sport_type',
-                         style={'display': 'inline-block', 'width': '150px',
+                                {'label': 'athletics', 'value': 'athletics'},
+                                {'label': 'swimming', 'value': 'swimming'}],
+                        value='running', id='sport_type',
+                        style={'display': 'inline-block', 'width': '150px',
                                 'margin-right': '35px', 'verticalAlign': 'middle'}),
             html.Div(children=['Sport : '], style={'display': 'inline-block', 'margin-right': '15px'}),
-            dcc.Dropdown(options=[{'label': sport, 'value': sport}
-                                  for sport in df_running_times['sport'].unique()],
-                         value='100m', id='running_type',
-                         style={'display': 'inline-block', 'width': '150px',
+            dcc.Dropdown(value='100m', id='running_type',
+                        style={'display': 'inline-block', 'width': '150px',
                                 'margin-right': '55px', 'verticalAlign': 'middle'}),
+            # dcc.Dropdown(options=[{'label': sport, 'value': sport}
+            #                     for sport in df_running_times['sport'].unique()],
+            #             value='100m', id='running_type',
+            #             style={'display': 'inline-block', 'width': '150px',
+            #                     'margin-right': '55px', 'verticalAlign': 'middle'}),
             dcc.RadioItems(options=[{'label': 'men', 'value': 'M'}, {'label': 'women', 'value': 'W'}],
-                           value='M', labelStyle={'display': 'inline-block'}, id='men_women',
-                           style={'display': 'inline-block'})
+                        value='M', labelStyle={'display': 'inline-block'}, id='men_women',
+                        style={'display': 'inline-block'})
         ], style={'textAlign': 'center'}),
 
         dcc.Graph(
@@ -330,14 +375,16 @@ app.layout = html.Div(className='background', children=[
             html.P(children='click on legend to display particular sports', style={'margin': '15px'}),
         ], style={'textAlign': 'center'}),
         html.Div([
-            dcc.Graph(figure=fig_weight_height),
+            # dcc.Graph(figure=fig_weight_height),
+            dcc.Graph(figure=gen_fig_weight_height()),
+
         ])
     ], className='container'),
     html.Div(children=[
         html.H1(children='Sports and players wise medal Count', style={'textAlign': 'center'}),
         html.Div(children=[
-            dcc.Graph(figure=fig_sport_wise, style={'display': 'inline-block', 'width': '50%'}),
-            dcc.Graph(figure=fig_player_wise, style={'display': 'inline-block', 'width': '50%'}),
+            dcc.Graph(figure=gen_fig_count(df_athlete_events_unique,'Sport',[200, 90, 90, 90, 250]), style={'display': 'inline-block', 'width': '50%'}),
+            dcc.Graph(figure=gen_fig_count(df_athlete_events,'Name',[180, 90, 90, 90, 250]), style={'display': 'inline-block', 'width': '50%'}),
         ]),
     ], className='container'),
     html.Div(children=[
@@ -346,15 +393,14 @@ app.layout = html.Div(className='background', children=[
             dcc.Graph(figure=px.scatter(gpd_df, x='Log GDP', y='Total number of medals',
                                         hover_data=['GDP 2020', 'Country'],
                                         trendline="ols"),
-                      style={'display': 'inline-block', 'width': '50%'}),
+                    style={'display': 'inline-block', 'width': '50%'}),
             dcc.Graph(figure=px.scatter(gpd_df, x='Log Population', y='Total number of medals',
                                         hover_data=['Population 2016', 'Country'],
                                         trendline="ols"),
-                      style={'display': 'inline-block', 'width': '50%'})
+                    style={'display': 'inline-block', 'width': '50%'})
         ]),
     ], className='container')
 ])
-
 
 ##############################
 # INTERACTIONS AND CALLBACKS #
@@ -365,22 +411,15 @@ app.layout = html.Div(className='background', children=[
     [Input('graph_type', 'value')])
 def build_graph(graph_type):
     # returns either the bar graph of the 20 greatest countries or only Europe or only America or only Africa
-    if graph_type == 'world':
-        return px.bar(medals, x='Country', y='count', color='medal',
-                      color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
-    if graph_type == 'europe_medals':
-        return px.bar(europe_medals, x='Country', y='count', color='medal',
-                      color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
-    if graph_type == 'america_medals':
-        return px.bar(america_medals, x='Country', y='count', color='medal',
-                      color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
-    if graph_type == 'asia_medals':
-        return px.bar(asia_medals, x='Country', y='count', color='medal',
-                      color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
-    if graph_type == 'africa_medals':
-        return px.bar(africa_medals, x='Country', y='count', color='medal',
-                      color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
-    return
+    medal_choice = {
+        'world': medals,
+        'europe_medals': europe_medals,
+        'america_medals': america_medals,
+        'asia_medals': asia_medals,
+        'africa_medals': africa_medals,
+    }
+    return px.bar(medal_choice[graph_type], x='Country', y='count', color='medal',
+                    color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#c96'})
 
 
 @app.callback(
@@ -396,7 +435,9 @@ def build_map(value):
     [Input('year_slider', 'value')]  # (2)
 )
 def update_figure(input_value):
-    '''return a choropleth map of medals won by country until a specific year'''
+    '''
+    return a choropleth map of medals won by country until a specific year
+    '''
     return px.choropleth(world_medals_time[input_value], locations='Country',
                          color='Total number of medals',
                          hover_data=['Gold', 'Silver', 'Bronze'],
@@ -408,7 +449,9 @@ def update_figure(input_value):
               [Input('interval', 'n_intervals')]
               )
 def on_tick(n_intervals):
-    '''make the slider scrolls the choropleth map'''
+    '''
+    make the slider scrolls the choropleth map
+    '''
     if n_intervals is None:
         return 0
     return years[(n_intervals + 1) % len(years)]
