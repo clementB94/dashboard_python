@@ -220,49 +220,6 @@ def gen_fig_count(df, count_by, column_width):
                     ], layout=layout)
     return
     
-# def gen_fig_sport_wise():
-#     sport_wise_df = df_athlete_events_unique[['Sport', 'Medal']].dropna().value_counts()
-#     sport_wise_df = pd.DataFrame({'Sport': sport_wise_df.index.get_level_values(0),
-#                                 'medal': sport_wise_df.index.get_level_values(1), 'count': sport_wise_df.values})
-#     sport_wise_df['count'] = sport_wise_df['count'].astype(int)
-#     sport_wise_df = sport_wise_df.pivot(index='Sport', columns='medal', values='count')
-#     sport_wise_df = sport_wise_df.fillna(0)
-#     sport_wise_df.reset_index(inplace=True)
-#     sport_wise_df['Total_number_of_medals'] = sport_wise_df['Bronze'] + sport_wise_df['Gold'] + sport_wise_df['Silver']
-#     sport_wise_df = sport_wise_df.sort_values(by='Total_number_of_medals', ascending=False)
-#     sport_iter = df_athlete_events_unique['Sport'].value_counts().rename_axis('Sport').reset_index(name='counts')
-#     sport_wise_df = pd.merge(left=sport_wise_df, right=sport_iter, left_on='Sport', right_on='Sport')
-#     return go.Figure(data=[go.Table(columnwidth=[200, 90, 90, 90, 250],
-#                     header=dict(values=['Player', 'Gold', 'Silver', 'Bronze',
-#                                         'Total number of medals']),
-#                     cells=dict(values=[sport_wise_df.Sport + ', ' +
-#                                         sport_wise_df.counts.astype(str) + ' times',
-#                                         sport_wise_df.Gold, sport_wise_df.Silver,
-#                                         sport_wise_df.Bronze,
-#                                         sport_wise_df.Total_number_of_medals]))
-#                     ], layout=layout)
-
-# def gen_fig_player_wise():
-#     player_wise_df = df_athlete_events[['Name', 'Medal']].dropna().value_counts()
-#     player_wise_df = pd.DataFrame({'Player': player_wise_df.index.get_level_values(0),
-#                                 'medal': player_wise_df.index.get_level_values(1), 'count': player_wise_df.values})
-#     player_wise_df = player_wise_df.pivot(index='Player', columns='medal', values='count')
-#     player_wise_df = player_wise_df.fillna(0)
-#     player_wise_df.reset_index(inplace=True)
-#     player_wise_df['Total_number_of_medals'] = player_wise_df['Bronze'] + player_wise_df['Gold'] + player_wise_df['Silver']
-#     player_wise_df = player_wise_df.sort_values(by='Total_number_of_medals', ascending=False)
-#     nation_of_player = df_athlete_events_unique[['Name', 'Team']].groupby('Name').first().reset_index()
-#     player_wise_df = pd.merge(left=player_wise_df, right=nation_of_player, left_on='Player', right_on='Name')
-#     return go.Figure(data=[go.Table(columnwidth=[180, 90, 90, 90, 250],
-#                     header=dict(values=['Player', 'Gold', 'Silver', 'Bronze',
-#                                         'Total number of medals']),
-#                     cells=dict(values=[player_wise_df.Player + ', ' + player_wise_df.Team,
-#                                         player_wise_df.Gold, player_wise_df.Silver,
-#                                         player_wise_df.Bronze,
-#                                         player_wise_df.Total_number_of_medals],
-#                                 align='center'))
-#                     ], layout=layout)
-
 # Weight/Height by sport dataframe and figure
 def gen_fig_weight_height():
     grouped_df = df_athlete_events_unique[df_athlete_events_unique["Season"] == "Summer"][["Sex", "Sport", "Weight", "Height", "Age"]]
@@ -352,11 +309,11 @@ app.layout = html.Div(className='background', children=[
             dcc.Dropdown(value='100m', id='running_type',
                         style={'display': 'inline-block', 'width': '150px',
                                 'margin-right': '55px', 'verticalAlign': 'middle'}),
-            # dcc.Dropdown(options=[{'label': sport, 'value': sport}
-            #                     for sport in df_running_times['sport'].unique()],
-            #             value='100m', id='running_type',
-            #             style={'display': 'inline-block', 'width': '150px',
-            #                     'margin-right': '55px', 'verticalAlign': 'middle'}),
+            dcc.Dropdown(options=[{'label': sport, 'value': sport}
+                                for sport in df_running_times['sport'].unique()],
+                        value='100m', id='running_type',
+                        style={'display': 'inline-block', 'width': '150px',
+                                'margin-right': '55px', 'verticalAlign': 'middle'}),
             dcc.RadioItems(options=[{'label': 'men', 'value': 'M'}, {'label': 'women', 'value': 'W'}],
                         value='M', labelStyle={'display': 'inline-block'}, id='men_women',
                         style={'display': 'inline-block'})
@@ -469,7 +426,9 @@ def update_output(value):
               Input('play', 'n_clicks'),
               Input('pause', 'n_clicks'))
 def play(play, pause):
-    '''pause or play the slider'''
+    '''
+    pause or play the slider
+    '''
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
     if 'pause' in changed_id:
         return True
