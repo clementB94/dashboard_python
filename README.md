@@ -80,13 +80,20 @@ Here we have the height and weight displayed by sport and gender and there are c
 
 these tables summarizes who won the most medals and which sport give the most medals, we can see that sport that most people will think about when thinking about olympics games are indeed the most represented. The second table shows that micheal phelps is a legend of the olympics and that he has a very impressive number of gold medals compared to the others, we also see that a lot of athletes played for the Soviet Union which demonstrate their power at the time. Nevertheless there is a majority of American athletes in this list.
  
+## Medal count by GDP and Population
+
+![image](https://user-images.githubusercontent.com/81488993/139697849-ea20c0fd-b5a1-4d61-ad18-2a867488ca36.png)
 
 
+GDP and Population values are log values, so the real distibution is wider. We see that there is kind of a threshhold to be a succesfull nation in the olympic game, nations with a not enough aumount of GDP and population all have less than 30 medals. We also can see that the medals more correlateed with GDP than population.
 
 
+# Dev Guide :
+ 
+*The code is composed of three major parts which we will explain*
 
+## Data Importation, Preparation and Aggregation
 
+## Application Architecture and HTML
 
-
-
-
+## Interactions and Callback
