@@ -3,13 +3,6 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
-        <entry key="\athletics_results.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="\noc_regions.csv">
           <value>
             <Attribute>
@@ -18,13 +11,6 @@
           </value>
         </entry>
         <entry key="\running_results.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\swimming_results.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
