@@ -1,18 +1,26 @@
 # dashboard_python
 
+
 This Python Dashboard is about Olympic Games, it summarize more than 100 years of Olympic Games and highlight some specific performances and statistics. 
 
 # User guide :
 
 ## This guide is an overview and explains the important features
 
-The Dashboard is built with Python3 and Dash, graphs are powered by Plotly.
-
-- [Olympic Games](https://en.wikipedia.org/wiki/Olympic_Games)
+The Dashboard is built with Python3 and Dash, graphs are powered by Plotly:
 - [What is Dash and its User Guide](https://dash.plotly.com/)
 - [How to install Dash](https://dash.plotly.com/installation)
+- [What is Plotly](https://plotly.com/python/)
 
-Once You have installed Dash you need download the code and execute the olympic games dashboard python file.
+
+The Olympics Games Datasets:
+ - [The main Kaggle's Dataset](https://www.kaggle.com/heesoo37/olympic-history-data-a-thorough-analysis/data)
+ - [Olympic Games Wikipedia](https://en.wikipedia.org/wiki/Olympic_Games)
+ - [Olympic Games Results](https://olympics.com/en/olympic-games)
+
+
+
+Once You have installed Dash and all others dependecies, you need download the code and execute the main python file (python main.py).
 The Python's depencies required for the compilation are :  Dash, Pandas, Plotly, Numpy and Scipy.
 When the code is executed a Localhost link appears, you need to clikc on it, it will show the Dashboard on a website. (you might wait a bit because there is a lot of datas and graphs to browse)
 ![image](https://user-images.githubusercontent.com/81488993/137878172-b2130bc2-6b4e-4ebb-a849-cc70e5e95957.png)
