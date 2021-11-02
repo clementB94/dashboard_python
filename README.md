@@ -136,4 +136,20 @@ Once all the data is scraped, we write it all in a csv file.
 
 ## Application Architecture and HTML
 
+There we define the architecture of the application with HTML elements, Dash core components and graphs.
+![image](https://user-images.githubusercontent.com/81488993/139869740-c378afe7-1f56-46f0-a43e-d00f76221cf9.png)
+It is designed as classic HTML files, but the main elements are dash and plotly elements.
+We also have to customize style there and use classnames which are written in typographie.css.
+
 ## Interactions and Callback
+
+The screen below is a basic callback, we use elements' ID to interact with them as output/input.
+![image](https://user-images.githubusercontent.com/81488993/139872118-9835ddbc-23c5-4f01-9b8c-a7a15ff776cc.png)
+We link inputs/outputs with a function to return a graph or to update some elements.
+
+## Other files
+
+The scrap.py file has been used to generate Running_results, Swimming_results and Athletics_results csv files.
+This file is now useless but can be upgraded to generate new datas.
+
+The asset folder contains the styling css file and the app's icon.
