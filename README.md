@@ -142,6 +142,12 @@ You have to modify sportSelected to choose the desired sports.
 Once all the data is scraped, we write it all in a csv file.
 
 
+we decare locals variables like conversion tables and NOC codes.
+Then, as you can see below, we read the csv files, take infos that we want and reformart the datas into a dataframe.
+![image](https://user-images.githubusercontent.com/81488993/139867758-1ed13fef-8825-4389-aef9-f9ee7ca94d2a.png)
+We do that multiple times and each time, depending on the finale graph that we want, the csv file, the selected columns and the format are different.
+Sometime we have to write a function to do theses steps in a more personnalized way, the function will be called later.
+
 ## Application Architecture and HTML
 
 There we define the architecture of the application with HTML elements, Dash core components and graphs.
