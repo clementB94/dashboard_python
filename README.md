@@ -94,6 +94,46 @@ GDP and Population values are log values, so the real distibution is wider. We s
 
 ## Data Importation, Preparation and Aggregation
 
+Our study is based on a database "120 years of Olympic history: athletes and results" available on Kaggle: https://www.kaggle.com/heesoo37/120-years-of-olympic-history-athletes-and-results
+It contains 271116 data on all the editions of the summer and winter Olympic games since 1896, that is 51 editions. 
+It provides us the following information:
+
+
+| Name| Information | Type |
+|-|-|-|
+| ID | Unique number for each athlete | Integer |
+| Name | Athlete’s name | String |
+| Sex  | Athlete’s gender | Char (F or M) |
+| Age | Athlete’s age | Integer |
+| Height | Athlete’s height (in centimeters) | Integer |
+| Weight | Athlete’s weight (in kilograms) | Integer |
+| Team | Athlete’s team name | String  |
+| NOC | National Olympic Committee 3-letter code | String |
+| Games | Year and Season | String |
+| Year | Year of the Olympic Game edition | Integer |
+| Season | Summer or Winter | String |
+| City | City which hosted the Olympic Game | String |
+| Sport | The category of the event (Swimming, Athletics…) | String |
+| Event | The event (100m, marathon …) | String |
+| Medal | Gold, Silver, Bronze or NA | String |
+
+To complete this data, we have created a scraper to get the data from the official website of the Olympic games: https://olympics.com/
+
+First we list all the editions we want to scrape, then the sports. With these two lists we generate the links of the pages to analyze in this way https://olympics.com/en/olympic-games/[edition]/results/[category]/[sport]
+For example for the edition in Rio in 2016 for the 100m men in the athletics category: https://olympics.com/en/olympic-games/rio-2016/results/athletics/100m-men
+After getting the HTML data of the page using the urllib library (https://docs.python.org/fr/3/library/urllib.request.html#module-urllib.request).
+we use HTMLParser from the html library - HyperText Markup Language support (https://docs.python.org/3/library/html.html). 
+We can start to look for the important data by launching the function MyHTMLParser.scan(self, data, game_info, sport_info) by passing to it in arguments the information on the sport being studied. With this information the function will generate "info" which contains : 
+[ The gender (M or W) , The sport , The country, the year ].
+
+The parser will scan the page, look for a tag whose id is "event-result-row" with handle_starttag, retrieve the following data with handle_data. Once the important data is retrieved, we use save_row to add information about the rank, the name, the country and the result. If the result is a time, we format it to follow this pattern : 0:00:00.00 . For example 9s58 will become 0:00:09.58.
+We also merge this information with the information of the event stored in infos to have in the end : [gender, sport, location, year, rank, name, country, results] that we add to all the other scraped data.
+We repeat the operation for each "event-result-row" tag, then for each sport in the list, then for each edition of the games.	
+For simplicity, a Sport class has been created to contain the information about the sports categories studied in our work. (running, athletics and swimming).
+You have to modify sportSelected to choose the desired sports.
+Once all the data is scraped, we write it all in a csv file.
+
+
 ## Application Architecture and HTML
 
 ## Interactions and Callback
