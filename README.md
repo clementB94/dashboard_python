@@ -20,9 +20,9 @@ The Olympics Games Datasets:
 
 
 
-Once You have installed Dash and all others dependecies, you need download the code and execute the main python file (python main.py).
+Once you have installed Dash and all others dependecies, you need download the code and execute the main python file (python main.py).
 The Python's depencies required for the compilation are :  Dash, Pandas, Plotly, Numpy and Scipy.
-When the code is executed a Localhost link appears, you need to clikc on it, it will show the Dashboard on a website. (you might wait a bit because there is a lot of datas and graphs to browse)
+When the code is executed a localhost link appears, you need to click on it, it will show the Dashboard on a website. (you might wait a bit because there is a lot of datas and graphs to browse)
 ![image](https://user-images.githubusercontent.com/81488993/137878172-b2130bc2-6b4e-4ebb-a849-cc70e5e95957.png)
 
 
@@ -34,7 +34,7 @@ When the code is executed a Localhost link appears, you need to clikc on it, it 
 
 ![image](https://user-images.githubusercontent.com/81488993/138504283-02ada97f-4d7e-4f01-98f8-a1e35ff3836f.png)
 
-Here we can see that United States are the strongest nation in the Olympic Games, they are folowed by the Soviet Union whiche no longer exist since 30 years, it does mean that during their 68 years of existence they were enough dominant to not be outdated. Further there is East Germany which is in almost in the same case. Overall we see that Western countries are the strongest even if China, Japan and South Korea are well positionned.
+Here we can see that United States are the strongest nation in the Olympic Games, they are folowed by the Soviet Union which no longer exist since 30 years, it does mean that during their 68 years of existence they were enough dominant to not be outdated. Further there is East Germany which is in almost in the same case. Overall we see that Western countries are the strongest even if China, Japan and South Korea are well positionned.
 
 ## Total amount of medals by region
 
@@ -51,7 +51,7 @@ It clearly shows American, Korean, Japanese and Chinese dominance in their respe
 | ------------- | ------------- |
 | ![image](https://user-images.githubusercontent.com/81488993/138509538-ac43e10e-d816-4163-ac32-ea925bc83f1b.png) | ![image](https://user-images.githubusercontent.com/81488993/138507587-666eb93e-313b-44af-9bf1-51bbeeb2f9c3.png) |
 
-This Map is about the evolution, so it's better to see it scroll in the app. But what we can say is that United states has been first since the beginning and that some countries has never obtained any medals and some others has obtained their first ever medal quite recently. 
+This Map is about the evolution, so it's better to see it scroll in the app. But what we can say is that United states has been first since the beginning and that some countries has never gained any medals and some others has obtained their first ever medal quite recently. 
 
 ## Map of medals won by sport
 
@@ -63,7 +63,7 @@ This Map is about the evolution, so it's better to see it scroll in the app. But
 |Weightlifting|Conoeing|
 ![image](https://user-images.githubusercontent.com/81488993/138509127-8388ac70-706b-4fe1-a40b-b4c9ae51098f.png) | ![image](https://user-images.githubusercontent.com/81488993/138509221-08d705b2-6522-4f55-8230-c8e41a803a48.png) |
 
-These maps shows that the U.S are strong on almost every sport, it also shows that some countries have their favourite sports like France and Italy with fencing and Germant with canoeing. The Gymnastics and Weightlifting maps present a great confrontation between the U.S and China and the skiing map confirms that the Nordic countries are the strongest on skis
+These maps shows that the U.S are strong on almost every sport, it also shows that some countries have their favourite sports like France and Italy with fencing and Germany with canoeing. The Gymnastics and Weightlifting maps present a great confrontation between the U.S and China and the skiing map confirms that the Nordic countries are the strongest on skis
 
 ## Performance by editions
 
@@ -73,20 +73,23 @@ These maps shows that the U.S are strong on almost every sport, it also shows th
 | ![image](https://user-images.githubusercontent.com/81488993/138512153-0945ff6c-2a62-4ae2-ac7f-04772facb028.png) | ![image](https://user-images.githubusercontent.com/81488993/138512195-ab0f2219-8724-4a1d-b679-8ba34e16afdf.png) |
 | ![image](https://user-images.githubusercontent.com/81488993/138511714-02ce0cce-8843-4f36-9f4a-5e0ec0053140.png) | ![image](https://user-images.githubusercontent.com/81488993/138511782-b06676ea-ed48-40ab-8a65-ab139dfec0cb.png) |
 
-What come to the eye directly is that overall athletes perform better and better in addition the slope of the curve is less and less strong, so maybe we can expect that worlds record become rarers and that athletes reach a point where the human body can't go further. 
-The Histograms highlight that 'good' performances are common because most of the results are not so far from the record but doing a truly great performance is very rare, combined with the fact that boxes in the boxplots are getting smaller and smaller we can conclude that the athletes performances are increasingly close and high.  
+What is most striking is that the athletes have progressed a lot since the beginning of the Olympics. In all the fields, the performances improve with time before stabilizing a little, in general since the years 70-80. Therefore, we can expect that worlds record become rarers and that athletes reach a point where the human body can't go further. 
+The Histograms highlight that 'good' performances are common because most of the results are not so far away from the record but doing a truly great performance is very rare, combined with the fact that boxes in the boxplots are getting smaller and smaller we can conclude that the athletes performances are increasingly close and good.  
 
 ## Weight/Height by sport (summer editions)
 
 ![image](https://user-images.githubusercontent.com/81488993/138570349-8a62af0b-4d7c-4854-9677-5981abd3b137.png)
 
-Here we have the height and weight displayed by sport and gender and there are clear differences by sport. in the men's scatter we have almost every sport with different dimensions and in both we see gymnastics need small height and height while basketball volleyball and handball need large height and weight.
+Here we have the height and weight displayed by sport and gender. We observe that there are notable differences depending on the sport. 
+We already observe a certain trend between the Weight/Height ratio but some sports are totally out of this trend. Indeed if we take the case of men, we see that gymnasts meet this trend, but they are the smallest, as well as the lightest. Conversely, we have sports like volleyball or basketball where men are the tallest and among the heaviest. Among those who do not follow this trend, we find for example the Weightlifters who have to be very heavy and small. Or tug-of-war athletes who have to be very tall and very heavy.
+This is not surprising, as we can see that each sport requires very specific characteristics of size and weight depending on the type of sport, power or agility, team or individual, combat or precision etc.
 
 ## Sports and players wise medal Count
 
 ![image](https://user-images.githubusercontent.com/81488993/138592823-d6376df8-937d-4d60-8ea1-f57d9e591ae3.png)
 
-these tables summarizes who won the most medals and which sport give the most medals, we can see that sport that most people will think about when thinking about olympics games are indeed the most represented. The second table shows that micheal phelps is a legend of the olympics and that he has a very impressive number of gold medals compared to the others, we also see that a lot of athletes played for the Soviet Union which demonstrate their power at the time. Nevertheless there is a majority of American athletes in this list.
+These tables summarizes who won the most medals and which sport give the most medals, we can see that sport that most people will think about when thinking about olympics games are indeed the most represented. 
+The second table shows for instance how Micheal Phelps is a legend of the olympics and that he has a very impressive number of gold medals compared to the others, we also see that a lot of athletes played for the Soviet Union which demonstrate their power at the time. Nevertheless there is a majority of American athletes in this list.
  
 ## Medal count by GDP and Population
 
