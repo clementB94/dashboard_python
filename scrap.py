@@ -38,7 +38,7 @@ class MyHTMLParser(HTMLParser, ABC):
             self.row.append(data)
             if len(self.row) > 5:  # On a récuperé les infos importantes
                 self.get_value = False
-                # On ne prend en compte les données si on a un resultat incorrect
+                # On ne prend pas en compte les données si on a un resultat incorrect
                 if 'Notes:' not in self.row:
                     # Gender, Event, Location, Année, Rang, Nom, Pays, Resultat
                     self.save_row()

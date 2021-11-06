@@ -8,10 +8,14 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
-from dash import Input
-from dash import Output
-from dash import dcc
-from dash import html
+
+from dash.dependencies import Output, Input
+import dash_core_components as dcc
+import dash_html_components as html
+# from dash import Input
+# from dash import Output
+# from dash import dcc
+# from dash import html
 from scipy import stats
 
 pd.options.mode.chained_assignment = None
@@ -223,7 +227,7 @@ def gen_fig_count(df, count_by, column_width):
 
 # Weight/Height by sport dataframe and figure
 def gen_fig_weight_height():
-    grouped_df = df_athlete_events_unique[df_athlete_events_unique["Season"] == "Summer"][
+    grouped_df = df_athlete_events[df_athlete_events["Season"] == "Summer"][
         ["Sex", "Sport", "Weight", "Height", "Age"]]
     grouped_df = grouped_df.groupby(["Sex", "Sport"])
     mean_df = grouped_df.mean().round(2).reset_index()
@@ -235,6 +239,16 @@ def gen_fig_weight_height():
     fig_weight_height.update_traces(textposition='middle right', textfont_size=8)
     return fig_weight_height
 
+
+df_sports = df_athlete_events[["Sport","Year","Season"]].drop_duplicates(subset=["Year","Sport","Season"])
+df_sports_year = df_sports.groupby(["Sport"]).describe()["Year"]
+
+sports_historic_categories = {}
+sports_historic_categories["all"] = df_sports_year.index.tolist()
+sports_historic_categories["<1950"] = df_sports_year[df_sports_year["max"]<=1950].index.tolist()
+sports_historic_categories[">1950"] = df_sports_year[df_sports_year["min"]>=1950].index.tolist()
+sports_historic_categories["always_summer"] = df_sports_year[(df_sports_year["min"]<=1900) & (df_sports_year["max"]==2016)].index.tolist()
+sports_historic_categories["always_winter"] = df_sports_year[(df_sports_year["min"]==1924) & (df_sports_year["max"]>=2013)].index.tolist()
 
 #####################################
 # APPLICATION ARCHITECTURE AND HTML #
@@ -309,7 +323,6 @@ app.layout = html.Div(className='background', children=[
             dcc.Dropdown(value='100m', id='running_type',
                          style={'display': 'inline-block', 'width': '150px',
                                 'margin-right': '55px', 'verticalAlign': 'middle'}),
-
             dcc.RadioItems(options=[{'label': 'men', 'value': 'M'}, {'label': 'women', 'value': 'W'}],
                            value='M', labelStyle={'display': 'inline-block'}, id='men_women',
                            style={'display': 'inline-block'})
@@ -354,7 +367,25 @@ app.layout = html.Div(className='background', children=[
                                         trendline="ols"),
                       style={'display': 'inline-block', 'width': '50%'})
         ]),
+    ], className='container'),
+
+
+    html.Div([
+        html.H1(children='Sport history', style={'textAlign': 'center'}),
+        html.Div([
+            dcc.RadioItems(options=[{'label': 'Practiced since the beginning (Summer)', 'value': 'always_summer'},{'label': 'Practiced since the beginning (Winter)', 'value': 'always_winter'}, {'label': 'Before 1950', 'value': '<1950'},
+            {'label': 'After 1950', 'value': '>1950'}],
+                           value='all', labelStyle={'display': 'inline-block'}, id='sport_history_choice',
+                           style={'display': 'inline-block'})
+        ], style={'textAlign': 'center'}),
+
+        dcc.Graph(
+            id='sport_history'
+        ),
+        
     ], className='container')
+
+
 ])
 
 
@@ -493,8 +524,24 @@ def update_histogram(value, gender_choice, sport_type):
     if sport_type == 'running':
         performance_df = performance_df[(np.abs(stats.zscore(performance_df['Performance'])) < 3)]  # remove outliers
     fig_hist_performance = px.histogram(performance_df, x="Performance")
-    fig_hist_performance.update_layout(barmode='overlay').update_traces(opacity=0.6)
+    fig_hist_performance.update_layout(barmode='overlay')
     return fig_hist_performance
+
+@app.callback(
+    Output('sport_history', 'figure'),
+    Input('sport_history_choice', 'value'),
+)
+def update_sport_history(value):
+    """
+    return a historic of sports in each editions
+    """
+    sport_list = sports_historic_categories[value]
+    fig_year_sport = px.scatter(df_sports.query("Sport in @sport_list"), x="Year", y="Sport", color="Season")
+    for i in range(len(fig_year_sport['data'])):
+        fig_year_sport['data'][i]['marker']['symbol'] = "square"
+        fig_year_sport['data'][i]['marker']['size'] = 9
+    
+    return fig_year_sport
 
 
 if __name__ == '__main__':
