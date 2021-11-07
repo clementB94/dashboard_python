@@ -96,7 +96,7 @@ The second table shows for instance how Micheal Phelps is a legend of the olympi
 ![image](https://user-images.githubusercontent.com/81488993/139697849-ea20c0fd-b5a1-4d61-ad18-2a867488ca36.png)
 
 
-GDP and Population values are log values, so the real distibution is wider. We see that there is kind of a threshhold to be a succesfull nation in the olympic game, nations with a not enough aumount of GDP and population all have less than 30 medals. We also can see that the medals more correlateed with GDP than population.
+GDP and Population values are log values, so the real distibution is wider. We see that there is kind of a threshhold to be a succesfull nation in the olympic game, nations with a not enough aumount of GDP and population all have less than 30 medals. We also can see that the medals are more correlateed with GDP than population.
 
 
 # Dev Guide :
