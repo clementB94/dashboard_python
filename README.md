@@ -1,7 +1,7 @@
 # dashboard_python
 
 
-This Python Dashboard is about Olympic Games, it summarize more than 100 years of Olympic Games and highlight some specific performances and statistics. 
+This Python Dashboard is about Olympic Games, it summarizes more than 100 years of Olympic Games and highlight some specific performances and statistics. 
 
 # User guide :
 
