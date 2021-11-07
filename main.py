@@ -10,12 +10,12 @@ import plotly.graph_objects as go
 import numpy as np
 
 from dash.dependencies import Output, Input
-import dash_core_components as dcc
-import dash_html_components as html
+# import dash_core_components as dcc
+# import dash_html_components as html
 # from dash import Input
 # from dash import Output
-# from dash import dcc
-# from dash import html
+from dash import dcc
+from dash import html
 from scipy import stats
 
 pd.options.mode.chained_assignment = None
@@ -240,15 +240,17 @@ def gen_fig_weight_height():
     return fig_weight_height
 
 
-df_sports = df_athlete_events[["Sport","Year","Season"]].drop_duplicates(subset=["Year","Sport","Season"])
+# Sports history trough time
+df_sports = df_athlete_events[["Sport", "Year", "Season"]].drop_duplicates(subset=["Year", "Sport", "Season"])
 df_sports_year = df_sports.groupby(["Sport"]).describe()["Year"]
 
-sports_historic_categories = {}
-sports_historic_categories["all"] = df_sports_year.index.tolist()
-sports_historic_categories["<1950"] = df_sports_year[df_sports_year["max"]<=1950].index.tolist()
-sports_historic_categories[">1950"] = df_sports_year[df_sports_year["min"]>=1950].index.tolist()
-sports_historic_categories["always_summer"] = df_sports_year[(df_sports_year["min"]<=1900) & (df_sports_year["max"]==2016)].index.tolist()
-sports_historic_categories["always_winter"] = df_sports_year[(df_sports_year["min"]==1924) & (df_sports_year["max"]>=2013)].index.tolist()
+sports_historic_categories = {"all": df_sports_year.index.tolist(),
+                              "<1950": df_sports_year[df_sports_year["max"] <= 1950].index.tolist(),
+                              ">1950": df_sports_year[df_sports_year["min"] >= 1950].index.tolist(),
+                              "always_summer": df_sports_year[
+                                  (df_sports_year["min"] <= 1900) & (df_sports_year["max"] == 2016)].index.tolist(),
+                              "always_winter": df_sports_year[
+                                  (df_sports_year["min"] == 1924) & (df_sports_year["max"] >= 2013)].index.tolist()}
 
 #####################################
 # APPLICATION ARCHITECTURE AND HTML #
@@ -369,22 +371,23 @@ app.layout = html.Div(className='background', children=[
         ]),
     ], className='container'),
 
-
     html.Div([
         html.H1(children='Sport history', style={'textAlign': 'center'}),
         html.Div([
-            dcc.RadioItems(options=[{'label': 'Practiced since the beginning (Summer)', 'value': 'always_summer'},{'label': 'Practiced since the beginning (Winter)', 'value': 'always_winter'}, {'label': 'Before 1950', 'value': '<1950'},
-            {'label': 'After 1950', 'value': '>1950'}],
-                           value='all', labelStyle={'display': 'inline-block'}, id='sport_history_choice',
-                           style={'display': 'inline-block'})
+            dcc.Tabs(id="sport_history_choice", value='all', children=[
+                dcc.Tab(label='All sports', value='all'),
+                dcc.Tab(label='Practiced since the beginning (Summer)', value='always_summer'),
+                dcc.Tab(label='Practiced since the beginning (Winter)', value='always_winter'),
+                dcc.Tab(label='Before 1950', value='<1950'),
+                dcc.Tab(label='After 1950', value='>1950')
+            ]),
         ], style={'textAlign': 'center'}),
 
         dcc.Graph(
             id='sport_history'
         ),
-        
-    ], className='container')
 
+    ], className='container')
 
 ])
 
@@ -527,6 +530,7 @@ def update_histogram(value, gender_choice, sport_type):
     fig_hist_performance.update_layout(barmode='overlay')
     return fig_hist_performance
 
+
 @app.callback(
     Output('sport_history', 'figure'),
     Input('sport_history_choice', 'value'),
@@ -537,10 +541,8 @@ def update_sport_history(value):
     """
     sport_list = sports_historic_categories[value]
     fig_year_sport = px.scatter(df_sports.query("Sport in @sport_list"), x="Year", y="Sport", color="Season")
-    for i in range(len(fig_year_sport['data'])):
-        fig_year_sport['data'][i]['marker']['symbol'] = "square"
-        fig_year_sport['data'][i]['marker']['size'] = 9
-    
+    fig_year_sport.update_traces(marker=dict(size=9, symbol='square'))
+
     return fig_year_sport
 
 
