@@ -233,7 +233,8 @@ def gen_fig_weight_height():
     mean_df = grouped_df.mean().round(2).reset_index()
     mean_df['Sex'] = mean_df['Sex'].replace('F', 'W')
     fig_weight_height = px.scatter(mean_df, x="Weight", y="Height", color="Sport", text="Sport",
-                                   facet_col="Sex", hover_data=["Age"])
+                                   facet_col="Sex", hover_data=["Age"], labels={"Weight": "Weight (kg)",
+                                                                                "Height": "Height (cm)"})
     fig_weight_height.layout.yaxis2.update(matches=None)
     fig_weight_height.layout.xaxis2.update(matches=None)
     fig_weight_height.update_traces(textposition='middle right', textfont_size=8)
