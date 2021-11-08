@@ -190,6 +190,17 @@ gpd_df['Log Population'] = np.log(gpd_df['Population 2016'])
 
 # creating sports and player wise figures
 def gen_fig_count(df, count_by, column_width):
+    """
+            Generate a datatable of medals won by player/sport
+
+            Args:
+                df: a dataframe we want to display
+                count_by: which variable we want to count by
+                column_width: width of the columns in px
+
+            Returns:
+                the datatable
+        """
     count_df = df[[count_by, 'Medal']].dropna().value_counts()
     count_df = pd.DataFrame({'Name': count_df.index.get_level_values(0),
                              'medal': count_df.index.get_level_values(1), 'count': count_df.values})
@@ -213,7 +224,7 @@ def gen_fig_count(df, count_by, column_width):
     elif count_by == 'Name':
         merge = df[['Name', 'Team']].groupby('Name').first().reset_index()
         count_df = pd.merge(left=count_df, right=merge, left_on='Name', right_on='Name')
-        return go.Figure(data=[go.Table(columnwidth=[180, 90, 90, 90, 250],
+        return go.Figure(data=[go.Table(columnwidth=column_width,
                                         header=dict(values=['Player', 'Gold', 'Silver', 'Bronze',
                                                             'Total number of medals']),
                                         cells=dict(values=[count_df.Name + ', ' + count_df.Team,
@@ -422,8 +433,8 @@ def build_map(value):
 
 
 @app.callback(
-    Output('world_fig', 'figure'),  # (1)
-    [Input('year_slider', 'value')]  # (2)
+    Output('world_fig', 'figure'),
+    [Input('year_slider', 'value')]
 )
 def update_figure(input_value):
     """
@@ -453,6 +464,7 @@ def on_tick(n_intervals):
     Input('year_slider', 'value')
 )
 def update_output(value):
+    # update the year prompt
     return 'Map of the year {}'.format(value)
 
 
