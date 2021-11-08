@@ -98,6 +98,11 @@ The second table shows for instance how Micheal Phelps is a legend of the olympi
 
 GDP and Population values are log values, so the real distibution is wider. We see that there is kind of a threshhold to be a succesfull nation in the olympic game, nations with a not enough aumount of GDP and population all have less than 30 medals. We also can see that the medals are more correlateed with GDP than population.
 
+## Sport history
+
+![image](https://user-images.githubusercontent.com/81488993/140793872-96cafb49-b2b8-410c-9b9f-98b5412e071f.png)
+
+This scatter plot traces the history of sports at the Olympic Games, here you can see old sports that have long since disappeared. For example, there was once an edition with a military ski patrol, there were also sports a little more fun like Tug-of-war, Basque pelota or Alpinism which was played during winter and summer edition.
 
 # Dev Guide :
  
