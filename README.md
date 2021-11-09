@@ -9,7 +9,6 @@ This Python Dashboard is about Olympic Games, it summarizes more than 100 years 
 
 The Dashboard is built with Python3 and Dash, graphs are powered by Plotly:
 - [What is Dash and its User Guide](https://dash.plotly.com/)
-- [How to install Dash](https://dash.plotly.com/installation)
 - [What is Plotly](https://plotly.com/python/)
 
 
@@ -18,12 +17,23 @@ The Olympics Games Datasets:
  - [Olympic Games Wikipedia](https://en.wikipedia.org/wiki/Olympic_Games)
  - [Olympic Games Results](https://olympics.com/en/olympic-games)
 
+The Python's depencies required for the compilation are :  
+ - Dash : https://dash.plotly.com/installation
+ - Pandas : https://pandas.pydata.org/docs/getting_started/install.html
+ - Plotly : https://plotly.com/python/getting-started/#installation
+ - Numpy : https://numpy.org/install/
+ - Scipy : https://scipy.org/install/
+
+Once you have installed Dash and all others dependecies, you only need download the code and execute the main python file (python main.py).
+All the datasets are already included, but can still be retrieved online:
+ - athlete_events.csv : https://www.kaggle.com/heesoo37/olympic-history-data-a-thorough-analysis
+ - athletics_results.csv, running_results.csv, swimming_results.csv : Via the file scrap.py (website : https://olympics.com/en/olympic-games)
 
 
-Once you have installed Dash and all others dependecies, you need download the code and execute the main python file (python main.py).
-The Python's depencies required for the compilation are :  Dash, Pandas, Plotly, Numpy and Scipy.
-When the code is executed a localhost link appears, you need to click on it, it will show the Dashboard on a website. (you might wait a bit because there is a lot of datas and graphs to browse)
+When the code is executed a localhost link appears, you need to click on it, it will show the Dashboard on a website.
+Usually the link is http://127.0.0.1:8050/.
 ![image](https://user-images.githubusercontent.com/81488993/137878172-b2130bc2-6b4e-4ebb-a849-cc70e5e95957.png)
+
 
 
 # Dashboard presentation :
@@ -160,18 +170,25 @@ Sometime we have to write a function to do theses steps in a more personnalized 
 
 There we define the architecture of the application with HTML elements, Dash core components and graphs.
 ![image](https://user-images.githubusercontent.com/81488993/139869740-c378afe7-1f56-46f0-a43e-d00f76221cf9.png)
-It is designed as classic HTML files, but the main elements are dash and plotly elements.
-We also have to customize style there and use classnames which are written in typographie.css.
+It is designed as classic HTML files, but the main elements are premade Dash Core Components (dcc) and plotly for the graphs. 
+https://dash.plotly.com/dash-core-components
+All the graphs are in the dcc.Graph() component.
+The optionals choices are made by component like dcc.Dropdown(), dcc.RadioItems(), dcc.Slider(), dcc.Tab()...
+
+We also have to customize some styles there and use classnames which are written in assets/typographie.css.
+
+To summarize, to add a basic component, you need to add a dcc.Graph() component containing the plotly figure or, if you want to make it interactive. Give it an id that will be used as an output in a callback function:
 
 ## Interactions and Callback
 
 The screen below is a basic callback, we use elements' ID to interact with them as output/input.
 ![image](https://user-images.githubusercontent.com/81488993/139872118-9835ddbc-23c5-4f01-9b8c-a7a15ff776cc.png)
 We link inputs/outputs with a function to return a graph or to update some elements.
+A callback is called when an event occurs on one of its inputs. This can be a different choice in a dropdown for instance. 
+What is returned will replace/update the component set as output.
 
 ## Other files
 
 The scrap.py file has been used to generate Running_results, Swimming_results and Athletics_results csv files.
 This file is now useless but can be upgraded to generate new datas.
-
 The asset folder contains the styling css file and the app's icon.
