@@ -110,9 +110,17 @@ GDP and Population values are log values, so the real distibution is wider. We s
 
 ## Sport history
 
+We can see the history of sports at the Olympic Games since their creation. The first Tab contains all the sports and all the editions, with so much information, it is difficult to visualize well, so the other Tabs allow to restrict them in 4 categories:
+The sports that have always been there (first editions until today), in summer then in winter
+The sports that are not represented since 1950 and the sports that appeared after 1950 and are still present.
+
 ![image](https://user-images.githubusercontent.com/81488993/140793872-96cafb49-b2b8-410c-9b9f-98b5412e071f.png)
 
-This scatter plot traces the history of sports at the Olympic Games, here you can see old sports that have long since disappeared. For example, there was once an edition with a military ski patrol, there were also sports a little more fun like Tug-of-war, Basque pelota or Alpinism which was played during winter and summer edition.
+This scatter plot traces the history of sports at the Olympic Games, here you can see old sports that have long since disappeared. For example, there was once an edition with a military ski patrol, there were also sports a little more fun like Tug-of-war, Basque pelota, Jeu de Paume etc.
+Or some more specials categories like Alpinism or Aeronautics which rewarded exploits made in these fields.
+
+![image](https://user-images.githubusercontent.com/15128882/140960411-694af633-03b3-464e-93e6-01dda56bc5cc.png)
+We can also notice that sports such as ice hockey and figure skating were present during summer games before the creation of winter games in 1924.
 
 # Dev Guide :
  
