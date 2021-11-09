@@ -236,8 +236,11 @@ def gen_fig_count(df, count_by, column_width):
     return
 
 
-# Weight/Height by sport dataframe and figure
+
 def gen_fig_weight_height():
+    """
+    Generate figure to compare weight and height by sports
+    """
     grouped_df = df_athlete_events[df_athlete_events["Season"] == "Summer"][
         ["Sex", "Sport", "Weight", "Height", "Age"]]
     grouped_df = grouped_df.groupby(["Sex", "Sport"])
@@ -254,15 +257,18 @@ def gen_fig_weight_height():
 
 # Sports history trough time
 df_sports = df_athlete_events[["Sport", "Year", "Season"]].drop_duplicates(subset=["Year", "Sport", "Season"])
-df_sports_year = df_sports.groupby(["Sport"]).describe()["Year"]
+df_sports_year = df_sports.groupby(["Sport"]).describe()["Year"].reset_index()
 
-sports_historic_categories = {"all": df_sports_year.index.tolist(),
-                              "<1950": df_sports_year[df_sports_year["max"] <= 1950].index.tolist(),
-                              ">1950": df_sports_year[df_sports_year["min"] >= 1950].index.tolist(),
+sports_historic_categories = {"all": df_sports_year["Sport"],
+                              "<1950": df_sports_year[df_sports_year["max"] <= 1950]["Sport"],
+                              ">1950": df_sports_year[df_sports_year["min"] >= 1950]["Sport"],
                               "always_summer": df_sports_year[
-                                  (df_sports_year["min"] <= 1900) & (df_sports_year["max"] == 2016)].index.tolist(),
+                                  (df_sports_year["min"] <= 1904) & 
+                                  (df_sports_year["max"] == 2016)]["Sport"],
                               "always_winter": df_sports_year[
-                                  (df_sports_year["min"] == 1924) & (df_sports_year["max"] >= 2013)].index.tolist()}
+                                  (df_sports_year["min"] <= 1924) & 
+                                  (df_sports_year["max"] == 2014) ]["Sport"]
+                            }
 
 #####################################
 # APPLICATION ARCHITECTURE AND HTML #
@@ -390,8 +396,8 @@ app.layout = html.Div(className='background', children=[
                 dcc.Tab(label='All sports', value='all'),
                 dcc.Tab(label='Practiced since the beginning (Summer)', value='always_summer'),
                 dcc.Tab(label='Practiced since the beginning (Winter)', value='always_winter'),
-                dcc.Tab(label='Before 1950', value='<1950'),
-                dcc.Tab(label='After 1950', value='>1950')
+                dcc.Tab(label='Old sports (Only before 1950)', value='<1950'),
+                dcc.Tab(label='New sports (Only after 1950', value='>1950')
             ]),
         ], style={'textAlign': 'center'}),
 
@@ -464,7 +470,9 @@ def on_tick(n_intervals):
     Input('year_slider', 'value')
 )
 def update_output(value):
-    # update the year prompt
+    """
+    update the year prompt
+    """
     return 'Map of the year {}'.format(value)
 
 
@@ -555,6 +563,16 @@ def update_sport_history(value):
     sport_list = sports_historic_categories[value]
     fig_year_sport = px.scatter(df_sports.query("Sport in @sport_list"), x="Year", y="Sport", color="Season")
     fig_year_sport.update_traces(marker=dict(size=9, symbol='square'))
+    if(value == "all"):
+        fig_year_sport.update_layout(
+            height=900,
+            yaxis = dict(
+            tickfont = dict(size=8))
+            )
+    else :
+        fig_year_sport.update_layout(
+            height=500,
+            )
 
     return fig_year_sport
 
